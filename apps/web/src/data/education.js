@@ -1,28 +1,33 @@
-// Institution names are exactly as supplied. `period` and `details` are intentionally blank:
-// fill them in only with real information — they are shown automatically when present.
+
 export const education = [
   {
-    id: 'newton',
-    institution: 'Newton Institute of Technology',
-    stage: 'Technology institute',
-    icon: 'graduation',
-    period: '',
-    details: '',
-  },
-  {
-    id: 'kwoyo-ougis',
-    institution: 'Kwoyo Ougis Secondary School',
-    stage: 'Secondary school',
-    icon: 'school',
-    period: '',
-    details: '',
-  },
-  {
-    id: 'nyamome',
+    id: 'primary',
+    stage: 'Primary Education',
     institution: 'Nyamome Primary School',
-    stage: 'Primary school',
     icon: 'book',
-    period: '',
-    details: '',
+    logo: '/images/education/nyamome-primary.png',
+    period: 'START_YEAR – END_YEAR',
+    endYear: 'END_YEAR',
+    details: 'Primary school education.',
+  },
+  {
+    id: 'secondary',
+    stage: 'Secondary Education',
+    institution: 'Kwoyo Ougis Secondary School',
+    icon: 'school',
+    logo: '/images/education/kwoyo-ougis.png',
+    period: 'START_YEAR – END_YEAR',
+    endYear: 'END_YEAR',
+    details: 'Secondary school education.',
+  },
+  {
+    id: 'college',
+    stage: 'College / Institute',
+    institution: 'Newton Institute of Technology',
+    icon: 'graduation',
+    logo: '/images/education/newton-institute.png',
+    period: 'START_YEAR – END_YEAR',
+    endYear: 'END_YEAR',
+    details: 'Higher education and technical learning.',
   },
 ]
