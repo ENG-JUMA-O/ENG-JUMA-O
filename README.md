@@ -64,19 +64,6 @@ I'm a passionate software developer focused on designing and building modern, sc
 
 <!-- ![Your GitHub stats](https://github-readme-stats.vercel.app/api?username=brightmuk&show_icons=true&theme=radical) -->
 
----
-
-## 📊 GitHub Statistics
-
-<p align="center">
-  <img
-    src="https://github-readme-stats.vercel.app/api?username=ENG-JUMA-O&show_icons=true&theme=tokyonight&hide_border=true"
-    alt="ENG Douglas Oroko's GitHub statistics"
-  />
-</p>
-
----
-
 ## 🔥 GitHub Contribution Streak
 
 <p align="center">
