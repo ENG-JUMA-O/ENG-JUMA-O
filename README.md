@@ -8,25 +8,61 @@ I'm a passionate software developer focused on designing and building modern, sc
 
 ## 🛠️ My Tech Stack
 
-<p align="left">
-  <img src="packages/public/images/flutter.png" alt="Flutter" width="45" height="45" />
-  &nbsp;
-  <img src="packages/public/images/dart.png" alt="Dart" width="45" height="45" />
-  &nbsp;
-  <img src="packages/public/images/swiftui.png" alt="SwiftUI" width="45" height="45" />
-  &nbsp;
-  <img src="packages/public/images/react.png" alt="React" width="45" height="45" />
-  &nbsp;
-  <img src="packages/public/images/sql.webp" alt="SQL" width="45" height="45" />
-  &nbsp;
-  <img src="packages/public/images/nodejs.png" alt="Node.js" width="45" height="45" />
-  &nbsp;
-  <img src="packages/public/images/github.png" alt="GitHub" width="45" height="45" />
-  &nbsp;
-  <img src="packages/public/images/typescript.png" alt="TypeScript" width="45" height="45" />
-</p>
+<table >
+  <tr>
+    <td >
+      <img src="packages/public/images/flutter.png" alt="Flutter" width="50"/>
+    </td>
+    <td >
+      <img src="packages/public/images/dart.png" alt="Dart" width="50"/>
+    </td>
+    <td >
+      <img src="packages/public/images/swiftui.png" alt="SwiftUI" width="50"/>
+    </td>
+        <td >
+      <img src="packages/public/images/react.png" alt="React" width="50"/>
+    </td>
+    <td >
+      <img src="packages/public/images/sql.webp" alt="SQL" width="50"/>
+    </td>
+    <td >
+      <img src="packages/public/images/nodejs.png" alt="Node.js" width="50"/>
+    </td>
+    <td >
+      <img src="packages/public/images/github.png" alt="GitHub" width="50"/>
+    </td>
+   <td >
+      <img src="packages/public/images/typescript.png" alt="TypeScript" width="50"/>
+    </td>
+  </tr>
+    <tr>
+    <td >
+      Flutter
+    </td>
+    <td >
+      Dart
+    </td>
+    <td >
+      SwiftUI
+    </td>
+    <td>
+      React
+    </td>
+    <td >
+      SQL
+    </td>
+    <td >
+      Node.js
+    </td>
+    <td >
+      GitHub
+    </td>
+    <td>
+      TypeScript
+    </td>
+</table>
 
-**Technologies:** Flutter · Dart · SwiftUI · React · SQL · Node.js · GitHub · TypeScript
+<!-- ![Your GitHub stats](https://github-readme-stats.vercel.app/api?username=brightmuk&show_icons=true&theme=radical) -->
 
 ---
 
