@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ENG Douglas Oroko — Software Developer</title>
+    <meta
+      name="description"
+      content="Portfolio of ENG Douglas Oroko, a software developer focused on UI/UX design, frontend and backend development, and cross-platform applications."
+    />
+    <meta name="theme-color" content="#2563EB" />
+    <link rel="icon" type="image/svg+xml" href="%BASE_URL%favicon.svg" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="ENG Douglas Oroko" />
+    <meta property="og:title" content="ENG Douglas Oroko — Software Developer" />
+    <meta
+      property="og:description"
+      content="Modern, intuitive and scalable digital experiences — UI/UX, frontend, backend and cross-platform development."
+    />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="ENG Douglas Oroko — Software Developer" />
+    <meta
+      name="twitter:description"
+      content="Modern, intuitive and scalable digital experiences — UI/UX, frontend, backend and cross-platform development."
+    />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <script>
+      // Light is the default theme. Only an explicit earlier choice switches to dark.
+      try {
+        var saved = localStorage.getItem('theme')
+        document.documentElement.dataset.theme = saved === 'dark' ? 'dark' : 'light'
+      } catch (e) {
+        document.documentElement.dataset.theme = 'light'
+      }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <noscript>This portfolio needs JavaScript enabled to display its content.</noscript>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

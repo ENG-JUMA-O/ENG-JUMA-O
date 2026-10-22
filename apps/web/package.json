@@ -1,0 +1,30 @@
+{
+  "name": "douglas-portfolio",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Portfolio website for ENG Douglas Oroko — Vite, React, JavaScript and Tailwind CSS v4.3",
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "prebuild": "node scripts/generate-sitemap.mjs",
+    "build": "vite build",
+    "postbuild": "node scripts/copy-404.mjs",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "lucide-react": ">=0.544.0 <2",
+    "motion": "^12.0.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-router-dom": "^7.0.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "~4.3.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "tailwindcss": "~4.3.0",
+    "vite": "^7.0.0"
+  }
+}

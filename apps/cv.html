@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Professional CV of ENG Douglas Oroko, software developer.">
+  <title>ENG Douglas Oroko | CV</title>
+  <style>
+    :root {
+      --blue: #1d4ed8;
+      --blue-dark: #163b9c;
+      --ink: #172033;
+      --muted: #5e6b80;
+      --line: #dce5f2;
+      --pale: #eff6ff;
+      --paper: #ffffff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: #edf2f8; color: var(--ink);
+      font-family: Inter, "Segoe UI", Arial, sans-serif; line-height: 1.55;
+    }
+    .toolbar {
+      max-width: 920px; margin: 24px auto 12px; display: flex;
+      justify-content: flex-end; gap: 10px; padding: 0 18px;
+    }
+    .toolbar a, .toolbar button {
+      border: 0; border-radius: 9px; padding: 10px 15px; cursor: pointer;
+      text-decoration: none; font-weight: 700; font-size: 14px;
+      background: var(--blue); color: white;
+    }
+    .toolbar .secondary { background: white; color: var(--blue); border: 1px solid var(--line); }
+    .cv {
+      max-width: 920px; margin: 0 auto 32px; background: var(--paper);
+      box-shadow: 0 18px 55px rgba(24, 45, 80, .12); display: grid;
+      grid-template-columns: 275px 1fr; min-height: 1120px;
+    }
+    aside { background: var(--pale); padding: 42px 28px; border-right: 1px solid var(--line); }
+    main { padding: 44px 42px; }
+    .monogram {
+      display: grid; place-items: center; width: 68px; height: 68px;
+      border-radius: 18px; color: white; font-size: 22px; font-weight: 800;
+      background: linear-gradient(135deg, var(--blue), #06b6d4); margin-bottom: 25px;
+      letter-spacing: -1px;
+    }
+    h1 { margin: 0; font-size: clamp(30px, 4vw, 40px); line-height: 1.08; letter-spacing: -1.5px; }
+    .role { color: var(--blue); font-weight: 750; font-size: 17px; margin: 12px 0 18px; }
+    .intro { color: var(--muted); font-size: 14px; margin: 0 0 26px; }
+    h2 {
+      color: var(--blue-dark); font-size: 13px; letter-spacing: 1.5px;
+      text-transform: uppercase; margin: 29px 0 12px; padding-bottom: 8px;
+      border-bottom: 2px solid var(--line);
+    }
+    aside h2 { margin-top: 25px; }
+    p { margin: 0 0 10px; }
+    .contact-item { font-size: 13px; margin: 0 0 10px; overflow-wrap: anywhere; }
+    .contact-item strong { display: block; color: var(--ink); font-size: 11px; text-transform: uppercase; letter-spacing: .8px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 7px; }
+    .chip { background: white; border: 1px solid #d6e3f5; border-radius: 7px; padding: 5px 8px; font-size: 12px; }
+    .section-intro { color: var(--muted); font-size: 14px; }
+    .entry { margin: 0 0 19px; }
+    .entry h3 { margin: 0 0 4px; font-size: 16px; }
+    .meta { color: var(--blue); font-size: 12px; font-weight: 700; margin-bottom: 6px; }
+    ul { padding-left: 18px; margin: 7px 0 0; }
+    li { margin-bottom: 5px; color: #3d495d; font-size: 13.5px; }
+    .placeholder { color: #66758b; font-style: italic; }
+    .notice { font-size: 11px; color: #6b778b; border-top: 1px solid var(--line); padding-top: 12px; margin-top: 26px; }
+    @media (max-width: 700px) {
+      .cv { grid-template-columns: 1fr; margin: 0 10px 20px; }
+      aside, main { padding: 28px 24px; }
+      .toolbar { margin-top: 12px; }
+    }
+    @media print {
+      @page { size: A4; margin: 0; }
+      body { background: white; }
+      .toolbar { display: none; }
+      .cv { max-width: none; margin: 0; box-shadow: none; min-height: auto; }
+      aside { padding: 30px 22px; }
+      main { padding: 32px 28px; }
+      h2 { break-after: avoid; }
+      .entry { break-inside: avoid; }
+      a { color: inherit; text-decoration: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <button onclick="window.print()">Save as PDF / Print</button>
+    <a class="secondary" href="#edit-notes">Personalize CV</a>
+  </div>
+  <div class="cv">
+    <aside>
+      <div class="monogram" aria-label="DO monogram">DO</div>
+      <h1>ENG Douglas Oroko</h1>
+      <p class="role">Software Developer</p>
+      <p class="intro">Passionate about building modern, user-friendly digital experiences across web and cross-platform technologies.</p>
+
+      <h2>Contact</h2>
+      <p class="contact-item"><strong>Email</strong><span class="placeholder">Add your professional email</span></p>
+      <p class="contact-item"><strong>Phone</strong><span class="placeholder">Add your phone number (optional)</span></p>
+      <p class="contact-item"><strong>GitHub</strong><span class="placeholder">Add your GitHub profile URL</span></p>
+      <p class="contact-item"><strong>LinkedIn</strong><span class="placeholder">Add your LinkedIn URL (optional)</span></p>
+      <p class="contact-item"><strong>Location</strong>Kenya</p>
+
+      <h2>Technical Skills</h2>
+      <div class="chips">
+        <span class="chip">Flutter</span><span class="chip">Dart</span>
+        <span class="chip">SwiftUI</span><span class="chip">React</span>
+        <span class="chip">TypeScript</span><span class="chip">Node.js</span>
+        <span class="chip">SQL</span><span class="chip">Git</span>
+        <span class="chip">GitHub</span><span class="chip">UI/UX Design</span>
+        <span class="chip">Frontend</span><span class="chip">Backend</span>
+      </div>
+
+      <h2>Core Strengths</h2>
+      <ul>
+        <li>User-focused interface design</li>
+        <li>Responsive web development</li>
+        <li>Cross-platform development</li>
+        <li>Problem-solving mindset</li>
+        <li>Continuous learning</li>
+      </ul>
+
+      <h2>Links</h2>
+      <p class="contact-item"><span class="placeholder">Add portfolio website URL</span></p>
+    </aside>
+
+    <main>
+      <p class="meta">PROFESSIONAL PROFILE</p>
+      <p class="section-intro">I am a passionate software developer with interests in UI/UX design, frontend development, backend development, and cross-platform application development. I enjoy turning ideas into practical digital products, with a focus on usability, clear interfaces, maintainable code, and continuous improvement.</p>
+
+      <h2>Technical Focus</h2>
+      <div class="entry">
+        <h3>Frontend & User Experience</h3>
+        <p class="section-intro">Building responsive interfaces and user-friendly experiences with React and modern web technologies, supported by UI/UX design principles.</p>
+      </div>
+      <div class="entry">
+        <h3>Cross-Platform Development</h3>
+        <p class="section-intro">Developing application experiences with Flutter and Dart, alongside an interest in SwiftUI for Apple-platform interfaces.</p>
+      </div>
+      <div class="entry">
+        <h3>Backend & Data</h3>
+        <p class="section-intro">Working with Node.js and SQL as part of full-stack application development and data-driven solutions.</p>
+      </div>
+
+      <h2>Selected Projects</h2>
+      <div class="entry">
+        <h3>Project One — <span class="placeholder">Add project name</span></h3>
+        <p class="section-intro">Add a concise description of the problem, what you built, and the value it provides.</p>
+        <p class="meta">Technologies: Add stack · GitHub: Add repository URL</p>
+      </div>
+      <div class="entry">
+        <h3>Project Two — <span class="placeholder">Add project name</span></h3>
+        <p class="section-intro">Describe an application, website, or interface that demonstrates your skills and contribution.</p>
+        <p class="meta">Technologies: Add stack · Live demo: Add URL if available</p>
+      </div>
+
+      <h2>Education</h2>
+      <div class="entry">
+        <h3>Newton Institute of Technology</h3>
+        <p class="section-intro placeholder">Add course or qualification and dates, if applicable.</p>
+      </div>
+      <div class="entry">
+        <h3>Kwoyo Ougis Secondary School</h3>
+        <p class="section-intro placeholder">Add attendance dates or qualification details if desired.</p>
+      </div>
+      <div class="entry">
+        <h3>Nyamome Primary School</h3>
+        <p class="section-intro placeholder">Add attendance dates if desired.</p>
+      </div>
+
+      <h2>Professional Interests</h2>
+      <p class="section-intro">Building useful software, exploring modern development tools, improving digital experiences, and learning new technologies.</p>
+
+      <p class="notice" id="edit-notes">CV draft: replace all italicized placeholders with accurate details, add real project links, and verify education details before sending this CV to employers.</p>
+    </main>
+  </div>
+</body>
+</html>
