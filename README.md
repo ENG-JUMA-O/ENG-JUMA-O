@@ -41,17 +41,6 @@ I'm a passionate software developer focused on designing and building modern, sc
 
 ---
 
-## 💻 Most Used Languages
-
-<p align="center">
-  <img
-    src="https://github-readme-stats.vercel.app/api/top-langs/?username=ENG-JUMA-O&layout=compact&theme=tokyonight&hide_border=true"
-    alt="Most used programming languages by ENG Douglas Oroko"
-  />
-</p>
-
----
-
 ## 🔥 GitHub Contribution Streak
 
 <p align="center">
@@ -61,14 +50,3 @@ I'm a passionate software developer focused on designing and building modern, sc
   />
 </p>
 
----
-
-## 🤝 Connect With Me
-
--GitHub: @ENG-JUMA-O
--Portfolio: eng-juma-o.onrender.com
--LinkedIn: Add your LinkedIn profile URL here.
--Email: devoroko@gmail.com
----
-
-⭐ **Thanks for visiting my profile!** Feel free to explore my repositories, check out my projects, and connect with me.
