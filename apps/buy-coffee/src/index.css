@@ -1,0 +1,46 @@
+@import "tailwindcss";
+
+@theme {
+  --color-cream: #fff9ed;
+  --color-coffee: #f6c453;
+  --color-coffee-dark: #a45b21;
+  --color-coffee-text: #85501c;
+  --color-ink: #29251f;
+  --color-muted: #756f65;
+  --color-card: #fffdf8;
+  --color-surface: #fffdf8;
+}
+
+:root { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: var(--color-ink); background: var(--color-cream); font-synthesis: none; text-rendering: optimizeLegibility; }
+html { scroll-behavior: smooth; }
+body { margin: 0; min-width: 320px; min-height: 100vh; }
+button, input, textarea { font: inherit; }
+::selection { background: #f6c453; color: #29251f; }
+:focus-visible { outline: 3px solid #a45b21; outline-offset: 3px; }
+
+/* Support page entrance motion and light-green visual system */
+.support-page { isolation: isolate; }
+.support-enter { animation: support-enter 720ms cubic-bezier(.2,.75,.25,1) both; }
+.support-enter-delay { animation-delay: 140ms; }
+.support-enter-delay-2 { animation-delay: 260ms; }
+.profile-orb { animation: orb-float 7s ease-in-out infinite alternate; }
+.profile-orb-delay { animation-delay: -3s; }
+.profile-photo-wrap { animation: photo-arrive 850ms cubic-bezier(.2,.75,.25,1) both; }
+.form-field { color: #1e293b; }
+.form-field:focus { border-color: #059669; box-shadow: 0 0 0 3px rgb(16 185 129 / 13%); }
+.form-field::placeholder { color: #a0a9a3; }
+.amount-option.selected { box-shadow: inset 0 0 0 1px rgb(5 150 105 / 12%); }
+@keyframes support-enter { from { opacity: 0; transform: translateY(22px) scale(.99); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes photo-arrive { from { opacity: 0; transform: scale(.88) rotate(-4deg); } to { opacity: 1; transform: scale(1) rotate(0); } }
+@keyframes orb-float { from { transform: translate3d(0,0,0) scale(1); } to { transform: translate3d(10px,-12px,0) scale(1.08); } }
+@media (prefers-reduced-motion: reduce) { .support-enter, .profile-photo-wrap, .profile-orb { animation: none !important; } *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; } }
+@media print {
+  @page { margin: 14mm; }
+  body { background: white !important; }
+  .support-page { min-height: 0 !important; padding: 0 !important; background: white !important; }
+  .support-topbar, .profile-panel, .support-form-panel, .support-page > p, .no-print { display: none !important; }
+  .support-layout { display: block !important; padding: 0 !important; margin: 0 !important; }
+  .coffee-card { border: 0 !important; box-shadow: none !important; padding: 0 !important; }
+  .receipt-paper { max-width: 100% !important; border-color: #9ca3af !important; background: white !important; }
+  .receipt-content { display: block !important; }
+}
