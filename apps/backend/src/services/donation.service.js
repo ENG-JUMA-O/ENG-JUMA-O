@@ -1,4 +1,3 @@
-
 import { randomUUID } from "node:crypto";
 
 import prisma from "../config/prisma.js";
@@ -11,7 +10,6 @@ import {
 } from "../repositories/donation.repository.js";
 
 import {
-  createNotificationRepository,
   findNotificationByDonationAndTypeRepository,
   updateNotificationRepository,
   findPendingNotificationsRepository,
@@ -57,8 +55,6 @@ const donationService = {
         payment,
       };
     } catch (error) {
-      // Preserve the donation record for investigation or callback recovery.
-      // A provider timeout does not prove that payment initiation failed.
       console.error("Donation payment initiation issue", {
         donationId: donation.id,
         externalReference: donation.externalReference,
@@ -74,17 +70,16 @@ const donationService = {
   },
 
   async handlePayHeroCallback(callback) {
+    // Initial callback validation removed temporarily.
     const result = callback?.response;
 
-    if (
-      callback?.status !== true ||
-      !result?.ExternalReference ||
-      !result?.CheckoutRequestID ||
-      result?.Amount == null ||
-      result?.ResultCode == null ||
-      !result?.Status
-    ) {
-      const error = new Error("Invalid PayHero callback payload");
+    console.log(
+      "PayHero callback received:",
+      JSON.stringify(callback, null, 2),
+    );
+
+    if (!result?.ExternalReference) {
+      const error = new Error("Missing donation reference");
       error.statusCode = 400;
       throw error;
     }
@@ -114,7 +109,7 @@ const donationService = {
       throw error;
     }
 
-    const paymentStatus = String(result.Status).toLowerCase();
+    const paymentStatus = String(result.Status ?? "").toLowerCase();
 
     const paymentSucceeded =
       Number(result.ResultCode) === 0 && paymentStatus === "success";
@@ -130,10 +125,11 @@ const donationService = {
         : "FAILED";
 
     const updateData = {
-      checkoutRequestId: result.CheckoutRequestID,
+      checkoutRequestId: result.CheckoutRequestID ?? undefined,
       merchantRequestId: result.MerchantRequestID ?? undefined,
       status,
-      providerResultCode: String(result.ResultCode),
+      providerResultCode:
+        result.ResultCode == null ? undefined : String(result.ResultCode),
       providerResultDescription: result.ResultDesc ?? null,
       ...(paymentSucceeded
         ? {
@@ -144,7 +140,6 @@ const donationService = {
     };
 
     if (!paymentSucceeded) {
-      // Never downgrade a donation already marked SUCCESS.
       if (donation.status !== "SUCCESS") {
         await updateDonationRepository(donation.id, updateData);
       }
@@ -173,7 +168,6 @@ const donationService = {
       });
     }
 
-    // Update payment status and create notification records atomically.
     await prisma.$transaction(async (tx) => {
       await tx.donation.updateMany({
         where: {
@@ -192,6 +186,7 @@ const donationService = {
         throw new Error("Unable to confirm donation success");
       }
 
+      // Requires the generated Prisma Client to contain the Notification model.
       await tx.notification.createMany({
         data: notificationData,
         skipDuplicates: true,
@@ -213,7 +208,6 @@ const donationService = {
       return;
     }
 
-    // Your current repository exposes PENDING notifications only.
     const notifications = await findPendingNotificationsRepository(50);
     const donationNotifications = notifications.filter(
       (notification) => notification.donationId === donationId,
@@ -233,7 +227,6 @@ const donationService = {
       : donation.customerName || "Supporter";
 
     for (const notification of donationNotifications) {
-      // Avoid sending if another attempt has already changed its status.
       const current = await findNotificationByDonationAndTypeRepository(
         notification.donationId,
         notification.type,
@@ -272,7 +265,6 @@ const donationService = {
       }
 
       try {
-        // Mark as SENDING before making the provider request.
         await updateNotificationRepository(notification.id, {
           status: "SENDING",
           attempts: { increment: 1 },
