@@ -14,29 +14,61 @@ enum DonationStatus {
   CANCELLED
 }
 
+enum NotificationType {
+  SUPPORTER_DONATION_RECEIPT
+  ADMIN_NEW_DONATION
+}
+
+enum NotificationStatus {
+  PENDING
+  SENDING
+  SENT
+  FAILED
+}
+
 model Donation {
-  id                String  @id @default(cuid())
-  externalReference String  @unique
-  checkoutRequestId String? @unique
-  merchantRequestId String?
+  id                        String             @id @default(cuid())
+  externalReference         String             @unique
+  checkoutRequestId         String?            @unique
+  merchantRequestId         String?
 
-  amount       Int
-  phone        String
-  customerName String?
-  message      String?
-  isAnonymous  Boolean @default(false)
+  amount                    Int
+  phone                     String
+  customerName              String?
+  message                   String?
+  isAnonymous               Boolean            @default(false)
 
-  status DonationStatus @default(PENDING)
-
-  mpesaReceiptNumber        String? @unique
+  status                    DonationStatus     @default(PENDING)
+  mpesaReceiptNumber        String?            @unique
   providerResultCode        String?
   providerResultDescription String?
 
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  paidAt    DateTime?
+  notifications             Notification[]
+
+  createdAt                 DateTime           @default(now())
+  updatedAt                 DateTime           @updatedAt
+  paidAt                    DateTime?
 
   @@index([status, createdAt])
   @@index([phone, createdAt])
   @@index([createdAt])
+}
+
+model Notification {
+  id             String             @id @default(cuid())
+  donationId     String
+  donation       Donation           @relation(fields: [donationId], references: [id], onDelete: Cascade)
+  type           NotificationType
+  recipient      String
+  status         NotificationStatus @default(PENDING)
+  providerId     String?
+  providerStatus String?
+  attempts       Int                @default(0)
+  lastError      String?
+  sentAt         DateTime?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  @@unique([donationId, type])
+  @@index([status, updatedAt])
 }

@@ -12,9 +12,9 @@ export function createDonationResponseDto({ donation, payment }) {
         createdAt: donation.createdAt,
       },
       payment: {
-        status: payment.status,
-        reference: payment.reference ?? null,
-        checkoutRequestId: payment.CheckoutRequestID ?? null,
+        status: payment?.status ?? null,
+        reference: payment?.reference ?? null,
+        checkoutRequestId: payment?.CheckoutRequestID ?? null,
       },
     },
   };

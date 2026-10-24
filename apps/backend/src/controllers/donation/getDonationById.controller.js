@@ -1,6 +1,4 @@
-
 import donationService from "../../services/donation.service.js";
-
 import { getDonationByIdResponseDto } from "../../dtos/donation/responses/getDonationById.response.dto.js";
 
 export default async function getDonationById(req, res, next) {
@@ -14,9 +12,7 @@ export default async function getDonationById(req, res, next) {
       });
     }
 
-    return res.status(200).json(
-      getDonationByIdResponseDto(donation),
-    );
+    return res.status(200).json(getDonationByIdResponseDto(donation));
   } catch (error) {
     next(error);
   }

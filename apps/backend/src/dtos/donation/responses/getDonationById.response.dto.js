@@ -8,16 +8,16 @@ export function getDonationByIdResponseDto(donation) {
       amount: donation.amount,
       customerName: donation.isAnonymous
         ? null
-        : donation.customerName,
+        : donation.customerName ?? null,
       message: donation.isAnonymous
         ? null
-        : donation.message,
+        : donation.message ?? null,
       isAnonymous: donation.isAnonymous,
       status: donation.status,
-      mpesaReceiptNumber: donation.mpesaReceiptNumber,
+      mpesaReceiptNumber: donation.mpesaReceiptNumber ?? null,
       createdAt: donation.createdAt,
       updatedAt: donation.updatedAt,
-      paidAt: donation.paidAt,
+      paidAt: donation.paidAt ?? null,
     },
   };
 }
