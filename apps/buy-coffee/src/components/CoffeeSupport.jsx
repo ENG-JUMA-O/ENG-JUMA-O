@@ -1,97 +1,153 @@
 import { useEffect, useRef, useState } from 'react'
-import {
-  CheckCircle2,
-  Coffee,
-  LoaderCircle,
-  Printer,
-  ShieldCheck,
-  AlertCircle,
-  RefreshCw,
-} from 'lucide-react'
 
 import {
+
+  CheckCircle2,
+
+  Coffee,
+
+  LoaderCircle,
+
+  ShieldCheck,
+
+  AlertCircle,
+
+  RefreshCw,
+
+} from 'lucide-react'
+
+import DonationReceipt from './DonationReceipt';
+
+import {
+
   createDonation,
+
   getDonation,
+
 } from '../services/donationApi'
 
 const COFFEE_AMOUNTS = [50, 100, 200, 500]
+
 const MIN_AMOUNT = 1
+
 const MAX_AMOUNT = 150000
 
 function normalizeKenyanPhone(phone) {
+
   const normalized = phone.replace(/[\s()-]/g, '')
 
   if (!/^(?:\+?254|0)[17]\d{8}$/.test(normalized)) {
+
     return null
+
   }
 
   if (normalized.startsWith('+254')) {
+
     return normalized.slice(1)
+
   }
 
   if (normalized.startsWith('0')) {
+
     return `254${normalized.slice(1)}`
+
   }
 
   return normalized
+
 }
 
 const money = (value) =>
+
   Number(value || 0).toLocaleString('en-KE')
 
 const fieldClass =
+
   'form-field mt-1 w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-200'
 
 export default function CoffeeSupport() {
+
   const [amount, setAmount] = useState(50)
+
   const [customAmount, setCustomAmount] = useState('')
+
   const [name, setName] = useState('')
+
   const [phone, setPhone] = useState('')
+
   const [message, setMessage] = useState('')
+
   const [anonymous, setAnonymous] = useState(false)
 
   const [status, setStatus] = useState('')
+
   const [statusType, setStatusType] = useState('info')
+
   const [loading, setLoading] = useState(false)
+
   const [receipt, setReceipt] = useState(null)
 
   const [pendingDonationId, setPendingDonationId] = useState(null)
+
   const [lastDonationId, setLastDonationId] = useState(null)
+
   const [checkingPayment, setCheckingPayment] = useState(false)
 
   const receiptContextRef = useRef(null)
+
   const pollTimerRef = useRef(null)
 
   const selectedAmount =
+
     amount === 'custom' ? Number(customAmount) : amount
 
   const formattedAmount =
+
     Number.isFinite(selectedAmount) && customAmount !== ''
+
       ? money(selectedAmount)
+
       : amount === 'custom'
+
         ? '0'
+
         : money(selectedAmount)
 
   function showStatus(text, type = 'info') {
+
     setStatus(text)
+
     setStatusType(type)
+
   }
 
   function stopPolling() {
+
     if (pollTimerRef.current) {
+
       clearTimeout(pollTimerRef.current)
+
       pollTimerRef.current = null
+
     }
+
   }
 
   async function pollDonation(
+
     donationId,
+
     attempt = 0,
+
     isStopped = () => false
+
   ) {
+
     if (!donationId || isStopped()) return
 
     try {
+
       const response = await getDonation(donationId)
 
       if (isStopped()) return
@@ -99,83 +155,131 @@ export default function CoffeeSupport() {
       const donation = response.data
 
       if (!donation) {
+
         throw new Error('The server did not return donation details.')
+
       }
 
       if (donation.status === 'SUCCESS') {
+
         stopPolling()
 
         const context = receiptContextRef.current || {}
 
         setReceipt({
+
           amount: Number(donation.amount),
+
           supporter: donation.isAnonymous
+
             ? 'Anonymous'
+
             : donation.customerName || context.name || 'Supporter',
+
           phone: context.phone || '',
+
           receiptNumber:
+
             donation.mpesaReceiptNumber ||
+
             donation.externalReference ||
+
             'Receipt pending',
+
           date:
+
             donation.paidAt ||
+
             donation.updatedAt ||
+
             donation.createdAt ||
+
             new Date().toISOString(),
+
           message: donation.message || '',
+
         })
 
         showStatus(
+
           'Payment confirmed. Thank you for supporting my work!',
+
           'success'
+
         )
 
         setPendingDonationId(null)
+
         setCheckingPayment(false)
+
         return
+
       }
 
       if (['FAILED', 'CANCELLED'].includes(donation.status)) {
+
         stopPolling()
 
         showStatus(
+
           donation.status === 'FAILED'
+
             ? 'Payment failed. You can start a new donation and try again.'
+
             : 'Payment was cancelled. You can try again when ready.',
+
           'error'
+
         )
 
         setPendingDonationId(null)
+
         setCheckingPayment(false)
+
         return
+
       }
+
     } catch {
+
       if (isStopped()) return
 
       // Retry temporary network errors without creating another payment.
+
     }
 
     if (isStopped()) return
 
     if (attempt >= 39) {
+
       stopPolling()
 
       showStatus(
+
         'Payment is still pending or could not be confirmed. Check your M-Pesa prompt, then use the status-check option below.',
+
         'info'
+
       )
 
       setPendingDonationId(null)
+
       setCheckingPayment(false)
+
       return
+
     }
 
     pollTimerRef.current = setTimeout(() => {
+
       pollDonation(donationId, attempt + 1, isStopped)
+
     }, 3000)
+
   }
 
   useEffect(() => {
+
     if (!pendingDonationId) return
 
     let stopped = false
@@ -185,243 +289,211 @@ export default function CoffeeSupport() {
     pollDonation(pendingDonationId, 0, () => stopped)
 
     return () => {
+
       stopped = true
+
       stopPolling()
+
     }
+
     // Each new pending donation starts a new polling session.
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, [pendingDonationId])
 
   async function handleSubmit(event) {
+
     event.preventDefault()
 
     if (loading || pendingDonationId) return
 
     setStatus('')
+
     setReceipt(null)
 
     // Validate custom and preset amounts on the frontend.
+
     if (
+
       !Number.isSafeInteger(selectedAmount) ||
+
       selectedAmount < MIN_AMOUNT ||
+
       selectedAmount > MAX_AMOUNT
+
     ) {
+
       showStatus(
+
         'Enter a whole donation amount between KES 1 and KES 150,000.',
+
         'error'
+
       )
+
       return
+
     }
 
     const normalizedPhone = normalizeKenyanPhone(phone)
 
     if (!normalizedPhone) {
+
       showStatus(
+
         'Enter a valid Kenyan M-Pesa number, such as 0712345678 or 254712345678.',
+
         'error'
+
       )
+
       return
+
     }
 
     if (!anonymous && name.trim().length > 80) {
+
       showStatus('Your name must be 80 characters or fewer.', 'error')
+
       return
+
     }
 
     if (message.trim().length > 500) {
+
       showStatus('Your message must be 500 characters or fewer.', 'error')
+
       return
+
     }
 
     setLoading(true)
 
     try {
+
       const response = await createDonation({
+
         amount: selectedAmount,
+
         phone: normalizedPhone,
+
         customerName: anonymous ? 'Anonymous' : name.trim(),
+
         message: message.trim(),
+
         isAnonymous: anonymous,
+
       })
 
       const donation = response.data?.donation
 
       if (!donation?.id) {
+
         throw new Error(
+
           'The server did not return a donation ID. Check your backend response.'
+
         )
+
       }
 
       receiptContextRef.current = {
+
         name: anonymous ? 'Anonymous' : name.trim(),
+
         phone: normalizedPhone,
+
       }
 
       setLastDonationId(donation.id)
+
       setPendingDonationId(donation.id)
 
       showStatus(
+
         'M-Pesa request sent. Check your phone and enter your PIN. Waiting for payment confirmation...',
+
         'info'
+
       )
+
     } catch (error) {
+
       showStatus(
+
         error instanceof Error
+
           ? error.message
+
           : 'Payment request failed. Please try again.',
+
         'error'
+
       )
+
     } finally {
+
       setLoading(false)
+
     }
+
   }
 
   function checkPaymentAgain() {
+
     if (!lastDonationId || pendingDonationId || loading) return
 
     setPendingDonationId(lastDonationId)
+
     showStatus('Checking payment status...', 'info')
+
   }
 
   function resetForm() {
+
     stopPolling()
 
     setPendingDonationId(null)
+
     setLastDonationId(null)
+
     setCheckingPayment(false)
+
     setReceipt(null)
+
     setStatus('')
+
     setStatusType('info')
 
     setAmount(50)
+
     setCustomAmount('')
+
     setName('')
+
     setPhone('')
+
     setMessage('')
+
     setAnonymous(false)
 
     receiptContextRef.current = null
+
   }
 
   return (
+
     <div className="coffee-card rounded-2xl border border-emerald-100 bg-white p-3 shadow-sm sm:p-4">
+
       {receipt ? (
-        <div className="receipt-content">
-          <div className="no-print flex flex-col items-center text-center">
-            <div className="grid h-12 w-12 place-items-center rounded-xl bg-emerald-100 text-emerald-700">
-              <CheckCircle2 size={25} />
-            </div>
-
-            <p className="mt-3 text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-700">
-              Payment confirmed
-            </p>
-
-            <h2 className="mt-1.5 text-xl font-black tracking-tight text-slate-900">
-              Thank you for the coffee!
-            </h2>
-
-            <p className="mt-1.5 max-w-sm text-xs leading-5 text-slate-500">
-              Your support means a lot. Your payment has been verified by
-              the server.
-            </p>
-          </div>
-
-          <div className="receipt-paper mx-auto mt-5 max-w-md rounded-xl border border-dashed border-emerald-200 bg-[#fbfefb] p-4">
-            <div className="flex items-center justify-between border-b border-dashed border-emerald-200 pb-3">
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-700">
-                  Support receipt
-                </p>
-                <p className="mt-1 text-[10px] text-slate-400">
-                  Independent developer support
-                </p>
-              </div>
-
-              <Coffee className="text-emerald-700" size={22} />
-            </div>
-
-            <div className="py-4 text-center">
-              <p className="text-xs text-slate-500">Amount received</p>
-              <p className="mt-1 text-3xl font-black tracking-tight text-slate-900">
-                KES {money(receipt.amount)}
-              </p>
-
-              <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-bold text-emerald-800">
-                <ShieldCheck size={12} />
-                Verified
-              </span>
-            </div>
-
-            <dl className="space-y-2.5 text-xs">
-              <div className="flex justify-between gap-3">
-                <dt className="text-slate-500">Supporter</dt>
-                <dd className="text-right font-semibold text-slate-800">
-                  {receipt.supporter}
-                </dd>
-              </div>
-
-              <div className="flex justify-between gap-3">
-                <dt className="text-slate-500">M-Pesa number</dt>
-                <dd className="text-right font-semibold text-slate-800">
-                  {receipt.phone}
-                </dd>
-              </div>
-
-              <div className="flex justify-between gap-3">
-                <dt className="text-slate-500">Receipt / reference</dt>
-                <dd className="max-w-[60%] break-all text-right font-semibold text-slate-800">
-                  {receipt.receiptNumber}
-                </dd>
-              </div>
-
-              <div className="flex justify-between gap-3">
-                <dt className="text-slate-500">Date</dt>
-                <dd className="text-right font-semibold text-slate-800">
-                  {new Date(receipt.date).toLocaleString('en-KE')}
-                </dd>
-              </div>
-
-              {receipt.message && (
-                <div className="border-t border-slate-100 pt-2.5">
-                  <dt className="text-slate-500">Message</dt>
-                  <dd className="mt-1 break-words text-slate-800">
-                    {receipt.message}
-                  </dd>
-                </div>
-              )}
-            </dl>
-
-            <p className="mt-4 border-t border-dashed border-emerald-200 pt-3 text-center text-[10px] text-slate-400">
-              Thank you for supporting independent development.
-            </p>
-          </div>
-
-          <div className="no-print mt-4 flex flex-col gap-2 sm:flex-row">
-            <button
-              type="button"
-              onClick={() => window.print()}
-              className="inline-flex min-h-9 flex-1 items-center justify-center gap-2 rounded-lg bg-emerald-700 px-3 py-2 text-xs font-bold text-white transition hover:bg-emerald-800"
-            >
-              <Printer size={15} />
-              Print receipt
-            </button>
-
-            <button
-              type="button"
-              onClick={resetForm}
-              className="min-h-9 flex-1 rounded-lg border border-emerald-200 px-3 py-2 text-xs font-bold text-emerald-800 transition hover:bg-emerald-50"
-            >
-              Support again
-            </button>
-          </div>
-        </div>
+        <DonationReceipt receipt={receipt} onSupportAgain={resetForm} />
       ) : (
         <>
           <div className="mb-3 flex items-center gap-2 border-b border-emerald-50 pb-2.5">
             <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-emerald-100 text-emerald-700">
               <Coffee size={16} />
             </div>
-
             <div>
               <h2
                 id="coffee-title"
@@ -517,10 +589,7 @@ export default function CoffeeSupport() {
                 htmlFor="supporter-name"
               >
                 Your name{' '}
-                <span className="font-normal text-slate-400">
-                  (optional)
-                </span>
-
+                <span className="font-normal text-slate-400">(optional)</span>
                 <input
                   id="supporter-name"
                   type="text"
@@ -574,10 +643,7 @@ export default function CoffeeSupport() {
               htmlFor="support-message"
             >
               Message{' '}
-              <span className="font-normal text-slate-400">
-                (optional)
-              </span>
-
+              <span className="font-normal text-slate-400">(optional)</span>
               <textarea
                 id="support-message"
                 value={message}
@@ -588,7 +654,6 @@ export default function CoffeeSupport() {
                 className={`${fieldClass} resize-y`}
                 placeholder="Leave an encouraging message..."
               />
-
               <span className="mt-0.5 block text-right text-[10px] font-normal text-slate-400">
                 {message.length}/500
               </span>
@@ -614,7 +679,6 @@ export default function CoffeeSupport() {
                 ) : (
                   <Coffee size={15} />
                 )}
-
                 {loading
                   ? 'Starting M-Pesa request...'
                   : pendingDonationId
@@ -642,7 +706,6 @@ export default function CoffeeSupport() {
                 ) : (
                   <ShieldCheck size={15} className="mt-0.5 shrink-0" />
                 )}
-
                 <span>{status}</span>
               </div>
             )}
@@ -688,6 +751,9 @@ export default function CoffeeSupport() {
           </form>
         </>
       )}
+
     </div>
+
   )
+
 }
