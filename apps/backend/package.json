@@ -8,8 +8,7 @@
   "scripts": {
     "dev": "nodemon server.js",
     "start": "node server.js",
-    "build": "prisma generate",
-    "test:sms": "node scripts/test-sms.js"
+    "build": "prisma generate"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
