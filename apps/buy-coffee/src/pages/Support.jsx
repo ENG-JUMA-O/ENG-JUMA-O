@@ -1,6 +1,5 @@
-
 import { useState } from 'react'
-import { Code2, Github, Heart, Sparkles } from 'lucide-react'
+import { Code2, Github } from 'lucide-react'
 import CoffeeSupport from '../components/CoffeeSupport.jsx'
 import { site } from '../data/site.js'
 
@@ -8,8 +7,7 @@ export default function Support() {
   const [imageFailed, setImageFailed] = useState(false)
 
   const profileImage =
-    import.meta.env.VITE_CREATOR_IMAGE ||
-    'https://github.com/ENG-JUMA-O.png'
+    import.meta.env.VITE_CREATOR_IMAGE || 'https://github.com/ENG-JUMA-O.png'
 
   const initials =
     site.name
@@ -21,80 +19,70 @@ export default function Support() {
       .toUpperCase() || 'YO'
 
   return (
-    <main className="support-page min-h-screen bg-[#f7fbf7] px-4 py-6 text-slate-800 sm:px-6 sm:py-8">
-      <header className="support-enter mx-auto mb-6 max-w-5xl text-center sm:mb-8">
-        <h1 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl lg:text-4xl">
-          Enjoying what I build?
-        </h1>
-        <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-600 sm:text-base">
-          Support my work with a coffee via M-Pesa.
-        </p>
-      </header>
+    <main className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-lime-50 px-4 py-6 text-slate-800 sm:px-6 sm:py-10">
+      <section className="mx-auto max-w-5xl overflow-hidden rounded-3xl border border-white bg-white shadow-xl shadow-emerald-900/10">
+        <div className="grid lg:grid-cols-[0.8fr_1.2fr]">
+          <aside className="bg-gradient-to-br from-emerald-800 to-green-600 p-6 text-white sm:p-8">
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-100">
+              <Code2 size={16} />
+              Developer
+            </div>
 
-      <div className="support-container support-enter mx-auto grid w-full max-w-5xl items-center gap-5 rounded-3xl border border-emerald-50 bg-white/70 p-3 shadow-[0_20px_60px_-35px_rgba(16,90,58,0.25)] sm:gap-6 sm:p-5 lg:grid-cols-[0.85fr_1.15fr] lg:gap-8 lg:p-6">
-        <section className="profile-panel min-w-0 p-2 sm:p-3" aria-label="Creator profile">
-          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-700">
-            <Sparkles size={15} />
-            Passionate developer
-          </div>
+            <div className="mt-6 flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border-4 border-white/80 bg-lime-100 sm:h-28 sm:w-28">
+              {!imageFailed && profileImage ? (
+                <img
+                  src={profileImage}
+                  alt={site.name}
+                  width="112"
+                  height="112"
+                  decoding="async"
+                  className="h-full w-full object-cover"
+                  onError={() => setImageFailed(true)}
+                />
+              ) : (
+                <span className="text-3xl font-black text-emerald-800">
+                  {initials}
+                </span>
+              )}
+            </div>
 
-          <div className="profile-photo-wrap mx-auto mt-5 grid h-28 w-28 place-items-center overflow-hidden rounded-full border-4 border-emerald-50 bg-gradient-to-br from-emerald-100 to-lime-100 shadow-md sm:mx-0 sm:h-32 sm:w-32">
-            {!imageFailed && profileImage ? (
-              <img
-                src={profileImage}
-                alt={`${site.name} profile`}
-                onError={() => setImageFailed(true)}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <span className="text-4xl font-black text-emerald-800">
-                {initials}
-              </span>
-            )}
-          </div>
+            <h1 className="mt-5 text-2xl font-black sm:text-3xl">
+              {site.name}
+            </h1>
 
-          <h2 className="mt-4 text-center text-2xl font-black tracking-tight text-slate-900 sm:text-left">
-            {site.name}
-          </h2>
-          <p className="mt-1 text-center text-sm font-medium text-emerald-700 sm:text-left">
-            {site.handle}
-          </p>
-          <p className="mt-3 text-center text-sm leading-6 text-slate-600 sm:text-left">
-            {site.bio}
-          </p>
+            <p className="mt-1 text-sm font-semibold text-lime-200">
+              {site.handle}
+            </p>
 
-          <div className="mt-4 flex flex-wrap justify-center gap-2 sm:justify-start">
-            <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-800">
-              <Code2 size={14} />
-              Building useful applications
-            </span>
+            <p className="mt-4 text-sm leading-6 text-emerald-50">
+              {site.bio}
+            </p>
+
             <a
               href={site.github}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-2 text-xs font-medium text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50"
+              className="mt-6 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-white/25 bg-white/10 px-4 py-3 text-sm font-bold transition hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-200"
             >
-              <Github size={14} />
-              GitHub
+              <Github size={18} />
+              View GitHub
             </a>
-          </div>
+          </aside>
 
-          <div className="mt-5 border-t border-slate-100 pt-4">
-            <p className="flex items-center justify-center gap-2 text-center text-xs text-slate-500 sm:justify-start sm:text-left">
-              <Heart size={14} className="shrink-0 text-emerald-600" />
-              Every coffee helps me keep building.
+          <div className="min-w-0 p-5 sm:p-8 lg:p-10">
+            <h2 className="mb-2 text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">
+              <span className="mr-2" aria-hidden="true">☕</span>
+              Buy me a coffee
+            </h2>
+
+            <p className="mb-6 text-sm text-slate-500">
+              Choose an amount and pay securely with M-Pesa.
             </p>
+
+            <CoffeeSupport />
           </div>
-        </section>
-
-        <section className="support-form-panel min-w-0" aria-label="Support payment form">
-          <CoffeeSupport />
-        </section>
-      </div>
-
-      <p className="support-enter mx-auto mt-5 max-w-5xl text-center text-[11px] text-slate-400">
-        Made with care · Payments are confirmed only after server-side M-Pesa verification
-      </p>
+        </div>
+      </section>
     </main>
   )
 }
