@@ -6,7 +6,8 @@ const mobitechConfig = {
 
   apiKey: process.env.MOBITECH_SMS_API_KEY,
 
-  serviceId: Number(process.env.MOBITECH_SMS_SERVICE_ID ?? 0),
+  // Preserve the configured service ID as a string.
+  serviceId: process.env.MOBITECH_SMS_SERVICE_ID?.trim() ?? "",
 
   senderName:
     process.env.MOBITECH_SMS_SENDER_NAME || "FULL_CIRCLE",
