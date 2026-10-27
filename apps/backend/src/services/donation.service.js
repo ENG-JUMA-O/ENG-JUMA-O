@@ -1,3 +1,4 @@
+
 import { randomUUID } from "node:crypto";
 
 import prisma from "../config/prisma.js";
@@ -9,14 +10,8 @@ import {
   updateDonationRepository,
 } from "../repositories/donation.repository.js";
 
-import {
-  findNotificationByDonationAndTypeRepository,
-  updateNotificationRepository,
-  findPendingNotificationsRepository,
-} from "../repositories/notification.repository.js";
-
 import payHeroService from "./payHero.service.js";
-import { sendMobitechSms } from "./sms.service.js";
+import notificationService from "./notification.service.js";
 import { normalizeKenyanPhone } from "../utils/phone.util.js";
 
 const donationService = {
@@ -42,22 +37,25 @@ const donationService = {
         customer_name: donation.customerName ?? "Anonymous",
       });
 
-      await updateDonationRepository(donation.id, {
-        checkoutRequestId: payment.CheckoutRequestID ?? undefined,
-        merchantRequestId: payment.MerchantRequestID ?? undefined,
-      });
+      const updatedDonation = await updateDonationRepository(
+        donation.id,
+        {
+          checkoutRequestId:
+            payment.CheckoutRequestID ?? undefined,
+          merchantRequestId:
+            payment.MerchantRequestID ?? undefined,
+        },
+      );
 
       return {
-        donation: {
-          ...donation,
-          checkoutRequestId: payment.CheckoutRequestID ?? null,
-        },
+        donation: updatedDonation,
         payment,
       };
     } catch (error) {
+      // Keep the donation for investigation if PayHero times out.
       console.error("Donation payment initiation issue", {
         donationId: donation.id,
-        externalReference: donation.externalReference,
+        externalReference,
         message: error.message,
       });
 
@@ -70,23 +68,25 @@ const donationService = {
   },
 
   async handlePayHeroCallback(callback) {
-    // Initial callback validation removed temporarily.
     const result = callback?.response;
 
-    console.log(
-      "PayHero callback received:",
-      JSON.stringify(callback, null, 2),
-    );
-
-    if (!result?.ExternalReference) {
-      const error = new Error("Missing donation reference");
+    if (
+      callback?.status !== true ||
+      !result?.ExternalReference ||
+      !result?.CheckoutRequestID ||
+      result?.Amount == null ||
+      result?.ResultCode == null ||
+      !result?.Status
+    ) {
+      const error = new Error("Invalid PayHero callback payload");
       error.statusCode = 400;
       throw error;
     }
 
-    const donation = await findDonationByExternalReferenceRepository(
-      result.ExternalReference,
-    );
+    const donation =
+      await findDonationByExternalReferenceRepository(
+        result.ExternalReference,
+      );
 
     if (!donation) {
       const error = new Error("Donation not found");
@@ -95,7 +95,9 @@ const donationService = {
     }
 
     if (Number(result.Amount) !== donation.amount) {
-      const error = new Error("Payment amount does not match donation");
+      const error = new Error(
+        "Payment amount does not match donation",
+      );
       error.statusCode = 400;
       throw error;
     }
@@ -109,14 +111,16 @@ const donationService = {
       throw error;
     }
 
-    const paymentStatus = String(result.Status ?? "").toLowerCase();
+    const paymentStatus = String(result.Status).toLowerCase();
 
     const paymentSucceeded =
-      Number(result.ResultCode) === 0 && paymentStatus === "success";
+      Number(result.ResultCode) === 0 &&
+      paymentStatus === "success";
 
-    const paymentCancelled = ["cancelled", "canceled"].includes(
-      paymentStatus,
-    );
+    const paymentCancelled = [
+      "cancelled",
+      "canceled",
+    ].includes(paymentStatus);
 
     const status = paymentSucceeded
       ? "SUCCESS"
@@ -125,23 +129,29 @@ const donationService = {
         : "FAILED";
 
     const updateData = {
-      checkoutRequestId: result.CheckoutRequestID ?? undefined,
-      merchantRequestId: result.MerchantRequestID ?? undefined,
+      checkoutRequestId: result.CheckoutRequestID,
+      merchantRequestId:
+        result.MerchantRequestID ?? undefined,
       status,
-      providerResultCode:
-        result.ResultCode == null ? undefined : String(result.ResultCode),
+      providerResultCode: String(result.ResultCode),
       providerResultDescription: result.ResultDesc ?? null,
+
       ...(paymentSucceeded
         ? {
-            mpesaReceiptNumber: result.MpesaReceiptNumber ?? undefined,
+            mpesaReceiptNumber:
+              result.MpesaReceiptNumber ?? undefined,
             paidAt: donation.paidAt ?? new Date(),
           }
         : {}),
     };
 
     if (!paymentSucceeded) {
+      // Never downgrade a confirmed successful payment.
       if (donation.status !== "SUCCESS") {
-        await updateDonationRepository(donation.id, updateData);
+        await updateDonationRepository(
+          donation.id,
+          updateData,
+        );
       }
 
       return {
@@ -150,24 +160,9 @@ const donationService = {
       };
     }
 
-    const notificationData = [
-      {
-        donationId: donation.id,
-        type: "SUPPORTER_DONATION_RECEIPT",
-        recipient: donation.phone,
-      },
-    ];
-
-    if (process.env.DONATION_ADMIN_PHONE) {
-      notificationData.push({
-        donationId: donation.id,
-        type: "ADMIN_NEW_DONATION",
-        recipient: normalizeKenyanPhone(
-          process.env.DONATION_ADMIN_PHONE,
-        ),
-      });
-    }
-
+    // Save payment confirmation first. Notifications are created
+    // separately so an SMS/database notification issue cannot
+    // roll back the confirmed payment.
     await prisma.$transaction(async (tx) => {
       await tx.donation.updateMany({
         where: {
@@ -183,126 +178,38 @@ const donationService = {
       });
 
       if (current?.status !== "SUCCESS") {
-        throw new Error("Unable to confirm donation success");
+        throw new Error(
+          "Unable to confirm donation success",
+        );
       }
-
-      // Requires the generated Prisma Client to contain the Notification model.
-      await tx.notification.createMany({
-        data: notificationData,
-        skipDuplicates: true,
-      });
     });
 
-    await donationService.processDonationNotifications(donation.id);
+    // Fetch the latest saved donation, including its M-Pesa receipt.
+    const confirmedDonation =
+      await findDonationByIdRepository(donation.id);
+
+    if (!confirmedDonation) {
+      throw new Error(
+        "Confirmed donation could not be retrieved",
+      );
+    }
+
+    // Create both notification records idempotently, then send
+    // their SMS messages concurrently.
+    await notificationService.createDonationNotifications(
+      confirmedDonation,
+    );
+
+    const notificationResult =
+      await notificationService.sendDonationNotifications(
+        donation.id,
+      );
 
     return {
       success: true,
-      message: "Payment confirmed; notification processing attempted",
+      message: "Payment confirmed; notification processing completed",
+      notifications: notificationResult,
     };
-  },
-
-  async processDonationNotifications(donationId) {
-    const donation = await findDonationByIdRepository(donationId);
-
-    if (!donation || donation.status !== "SUCCESS") {
-      return;
-    }
-
-    const notifications = await findPendingNotificationsRepository(50);
-    const donationNotifications = notifications.filter(
-      (notification) => notification.donationId === donationId,
-    );
-
-    const receipt =
-      donation.mpesaReceiptNumber || donation.externalReference;
-
-    const paidAt = new Intl.DateTimeFormat("en-KE", {
-      dateStyle: "short",
-      timeStyle: "short",
-      timeZone: "Africa/Nairobi",
-    }).format(donation.paidAt ?? new Date());
-
-    const donorName = donation.isAnonymous
-      ? "Anonymous"
-      : donation.customerName || "Supporter";
-
-    for (const notification of donationNotifications) {
-      const current = await findNotificationByDonationAndTypeRepository(
-        notification.donationId,
-        notification.type,
-      );
-
-      if (!current || current.status !== "PENDING") {
-        continue;
-      }
-
-      let message;
-
-      if (notification.type === "SUPPORTER_DONATION_RECEIPT") {
-        message = [
-          `Thank you ${donorName}!`,
-          `Your KES ${donation.amount} donation was successful.`,
-          `M-Pesa receipt: ${receipt}.`,
-          "Thank you for your support!",
-        ].join(" ");
-      } else if (notification.type === "ADMIN_NEW_DONATION") {
-        message = [
-          "NEW DONATION RECEIVED",
-          `Amount: KES ${donation.amount}`,
-          `Receipt: ${receipt}`,
-          `Time: ${paidAt}`,
-          `Donor: ${donorName}`,
-          `Phone: ${donation.phone}`,
-          `Message: ${donation.message || "No message"}`,
-          `Donation ID: ${donation.id}`,
-        ].join(" | ");
-      } else {
-        await updateNotificationRepository(notification.id, {
-          status: "FAILED",
-          lastError: "Unsupported notification type",
-        });
-        continue;
-      }
-
-      try {
-        await updateNotificationRepository(notification.id, {
-          status: "SENDING",
-          attempts: { increment: 1 },
-          lastError: null,
-        });
-
-        const smsResult = await sendMobitechSms({
-          mobile: notification.recipient,
-          message,
-        });
-
-        await updateNotificationRepository(notification.id, {
-          status: "SENT",
-          providerId: smsResult?.message_id
-            ? String(smsResult.message_id)
-            : null,
-          providerStatus: smsResult?.status_desc
-            ? String(smsResult.status_desc)
-            : null,
-          sentAt: new Date(),
-          lastError: null,
-        });
-      } catch (error) {
-        await updateNotificationRepository(notification.id, {
-          status: "FAILED",
-          lastError: String(
-            error?.message || "SMS sending failed",
-          ).slice(0, 1000),
-        });
-
-        console.error("Donation notification failed", {
-          donationId,
-          notificationId: notification.id,
-          type: notification.type,
-          error: error.message,
-        });
-      }
-    }
   },
 };
 

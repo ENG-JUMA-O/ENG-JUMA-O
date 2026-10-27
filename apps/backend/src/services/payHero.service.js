@@ -1,9 +1,11 @@
-import axios from "axios";
 
-const PAYHERO_URL = "https://backend.payhero.co.ke/api/v2/payments";
+import axios from "axios";
+import payHeroConfig, {
+  validatePayHeroConfig,
+} from "../config/payhero.config.js";
 
 const payHeroClient = axios.create({
-  baseURL: PAYHERO_URL,
+  baseURL: payHeroConfig.baseUrl,
   timeout: 12000,
   headers: {
     "Content-Type": "application/json",
@@ -18,31 +20,7 @@ const payHeroService = {
     external_reference,
     customer_name,
   }) {
-    const {
-      PAYHERO_USERNAME,
-      PAYHERO_PASSWORD,
-      PAYHERO_CHANNEL_ID,
-      PAYHERO_CALLBACK_URL,
-    } = process.env;
-
-    if (
-      !PAYHERO_USERNAME ||
-      !PAYHERO_PASSWORD ||
-      !PAYHERO_CHANNEL_ID ||
-      !PAYHERO_CALLBACK_URL
-    ) {
-      const error = new Error("PayHero configuration is incomplete");
-      error.statusCode = 500;
-      throw error;
-    }
-
-    const channelId = Number(PAYHERO_CHANNEL_ID);
-
-    if (!Number.isSafeInteger(channelId) || channelId <= 0) {
-      const error = new Error("Invalid PayHero channel configuration");
-      error.statusCode = 500;
-      throw error;
-    }
+    const config = validatePayHeroConfig();
 
     if (!Number.isSafeInteger(amount) || amount < 1) {
       const error = new Error("Invalid payment amount");
@@ -69,7 +47,7 @@ const payHeroService = {
     }
 
     const credentials = Buffer.from(
-      `${PAYHERO_USERNAME}:${PAYHERO_PASSWORD}`,
+      `${config.username}:${config.password}`,
       "utf8",
     ).toString("base64");
 
@@ -79,11 +57,11 @@ const payHeroService = {
         {
           amount,
           phone_number,
-          channel_id: channelId,
+          channel_id: config.channelId,
           provider: "m-pesa",
           external_reference,
           customer_name: customer_name || "Anonymous",
-          callback_url: PAYHERO_CALLBACK_URL,
+          callback_url: config.callbackUrl,
         },
         {
           headers: {
@@ -106,7 +84,7 @@ const payHeroService = {
         axios.isAxiosError(cause)
           ? cause.code === "ECONNABORTED" ||
             cause.code === "ETIMEDOUT"
-            ? "PayHero request timed out; payment status must be verified before retrying"
+            ? "PayHero request timed out; verify payment status before retrying"
             : "PayHero payment request failed"
           : "Unexpected PayHero error",
       );

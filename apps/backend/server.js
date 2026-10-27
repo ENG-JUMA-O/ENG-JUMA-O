@@ -9,7 +9,7 @@ async function startServer() {
   try {
     // Check the database connection
     await prisma.$connect();
-    console.log("✅ database connected!");
+    console.log(" database connected!");
 
     // Start the Express server
     app.listen(PORT, () => {

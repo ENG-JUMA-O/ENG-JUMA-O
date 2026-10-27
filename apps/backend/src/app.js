@@ -1,11 +1,13 @@
+
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 
+import { generalRateLimiter } from "./middlewares/rateLimiter.middleware.js";
+import errorMiddleware from "./middlewares/error.middleware.js";
+
+import healthRoutes from "./routes/health.routes.js";
 import donationRoutes from "./routes/donation.routes.js";
-import errorMiddleware, {
-  generalRateLimiter,
-} from "./middleware/error.middleware.js";
 
 const app = express();
 
@@ -28,6 +30,7 @@ if (process.env.FRONTEND_URL) {
 }
 
 app.set("trust proxy", 1);
+
 app.use(
   cors({
     origin(origin, callback) {
@@ -45,26 +48,14 @@ app.use(
 
 app.use(express.json({ limit: "10kb" }));
 
-// Apply general rate limiting to API requests.
 app.use("/api", generalRateLimiter);
 
-app.get("/", (_req, res) => {
-  res.status(200).json({
-    success: true,
-    message: "Buy Me Coffee API is running",
-  });
-});
+app.use("/", healthRoutes);
 
-app.get("/api/health", (_req, res) => {
-  res.status(200).json({
-    success: true,
-    status: "OK",
-  });
-});
-
+// Donation endpoints
 app.use("/api/donations", donationRoutes);
 
-// Error handler must be registered last.
+// Keep the error handler last
 app.use(errorMiddleware);
 
 export default app;
