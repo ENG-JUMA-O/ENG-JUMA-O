@@ -6,6 +6,14 @@ import { normalizeKenyanPhone } from "../utils/phone.util.js";
 
 const notificationService = {
   async createDonationNotifications(donation) {
+    if (!donation || donation.status !== "SUCCESS") {
+      throw new Error(
+        "Notifications can only be created for successful donations.",
+      );
+    }
+
+    const donorPhone = normalizeKenyanPhone(donation.phone);
+
     const rawRecipientPhone =
       donation.recipientPhone ||
       process.env.COFFEE_RECIPIENT_PHONE;
@@ -18,7 +26,7 @@ const notificationService = {
       {
         donationId: donation.id,
         type: "SUPPORTER_DONATION_RECEIPT",
-        recipient: donation.phone,
+        recipient: donorPhone,
       },
       ...(recipientPhone
         ? [
@@ -36,10 +44,16 @@ const notificationService = {
       skipDuplicates: true,
     });
 
-    return notifications;
+    return {
+      success: true,
+      requested: notifications.length,
+    };
   },
 
-  async sendDonationNotifications(donationId) {
+  async sendDonationNotifications(
+    donationId,
+    { retryFailed = false } = {},
+  ) {
     const donation = await prisma.donation.findUnique({
       where: { id: donationId },
     });
@@ -56,17 +70,41 @@ const notificationService = {
     const notifications = await prisma.notification.findMany({
       where: {
         donationId,
-        status: "PENDING",
+        status: retryFailed
+          ? { in: ["PENDING", "FAILED"] }
+          : "PENDING",
+        ...(retryFailed ? { attempts: { lt: 3 } } : {}),
       },
+      orderBy: { createdAt: "asc" },
     });
+
+    if (notifications.length === 0) {
+      const existing = await prisma.notification.count({
+        where: { donationId },
+      });
+
+      return {
+        success: false,
+        message:
+          existing === 0
+            ? "No notification records exist for this donation."
+            : "No eligible notifications to send. Check notification statuses.",
+        total: 0,
+        results: [],
+      };
+    }
 
     const results = await Promise.allSettled(
       notifications.map(async (notification) => {
-        // Atomically claim the notification before sending.
+        const eligibleStatuses = retryFailed
+          ? ["PENDING", "FAILED"]
+          : ["PENDING"];
+
         const claimed = await prisma.notification.updateMany({
           where: {
             id: notification.id,
-            status: "PENDING",
+            status: { in: eligibleStatuses },
+            ...(retryFailed ? { attempts: { lt: 3 } } : {}),
           },
           data: {
             status: "SENDING",
@@ -90,14 +128,13 @@ const notificationService = {
           );
 
           const response = await sendMobitechSms({
-            mobile: notification.recipient,
+            mobile: normalizeKenyanPhone(notification.recipient),
             message,
           });
 
           if (response?.success !== true) {
             throw new Error(
-              response?.message ||
-                "SMS provider rejected the message",
+              response?.message || "SMS provider rejected the message.",
             );
           }
 
@@ -108,8 +145,7 @@ const notificationService = {
               providerId: response.messageId
                 ? String(response.messageId)
                 : null,
-              providerStatus:
-                response.message || "Accepted by provider",
+              providerStatus: response.message || "Accepted by provider",
               sentAt: new Date(),
               lastError: null,
             },
@@ -118,6 +154,7 @@ const notificationService = {
           return {
             success: true,
             id: notification.id,
+            providerId: response.messageId ?? null,
           };
         } catch (error) {
           await prisma.notification.update({
@@ -134,7 +171,7 @@ const notificationService = {
             donationId,
             notificationId: notification.id,
             type: notification.type,
-            error: error.message,
+            message: error.message,
           });
 
           throw error;
@@ -147,12 +184,14 @@ const notificationService = {
         ? result.value
         : {
             success: false,
-            error: result.reason?.message,
+            error: result.reason?.message || "Unknown error",
           },
     );
 
     return {
-      success: summary.every((result) => result.success),
+      success:
+        summary.length > 0 &&
+        summary.every((result) => result.success),
       total: notifications.length,
       results: summary,
     };

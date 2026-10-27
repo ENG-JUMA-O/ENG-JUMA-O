@@ -1,45 +1,60 @@
 
 import axios from "axios";
 import mobitechConfig from "../../config/mobitech.config.js";
+import { normalizeKenyanPhone } from "../../utils/normalizeKenyanPhone.js";
 
 const SMS_ENDPOINT = "/sms/sendsms";
+const SMS_TIMEOUT_MS = 15000;
+const MAX_SMS_LENGTH = 920;
 
-export const sendMobitechSms = async ({ mobile, message, senderName }) => {
-  if (!mobitechConfig.apiKey) {
-    const error = new Error("Mobitech API key is not configured.");
+export const sendMobitechSms = async ({
+  mobile,
+  message,
+  senderName,
+}) => {
+  if (
+    !mobitechConfig.apiKey ||
+    !mobitechConfig.baseUrl ||
+    !mobitechConfig.serviceId
+  ) {
+    const error = new Error(
+      "Mobitech API key, base URL, and service ID must be configured.",
+    );
     error.statusCode = 500;
     throw error;
   }
 
-  if (!mobile || typeof mobile !== "string") {
-    const error = new Error("A valid mobile number is required.");
-    error.statusCode = 400;
-    throw error;
-  }
-
-  if (!message || typeof message !== "string" || !message.trim()) {
+  if (typeof message !== "string" || !message.trim()) {
     const error = new Error("SMS message is required.");
     error.statusCode = 400;
     throw error;
   }
 
-  if (message.length > 920) {
-    const error = new Error("SMS message cannot exceed 920 characters.");
+  const trimmedMessage = message.trim();
+
+  if (trimmedMessage.length > MAX_SMS_LENGTH) {
+    const error = new Error(
+      `SMS message cannot exceed ${MAX_SMS_LENGTH} characters.`,
+    );
     error.statusCode = 400;
     throw error;
   }
 
+  const normalizedMobile = normalizeKenyanPhone(mobile);
+
   const payload = {
-    mobile: mobile.trim(),
+    mobile: normalizedMobile,
     sender_name: senderName || mobitechConfig.senderName,
     service_id: mobitechConfig.serviceId,
     response_type: mobitechConfig.responseType,
-    message: message.trim(),
+    message: trimmedMessage,
   };
 
   try {
+    const baseUrl = mobitechConfig.baseUrl.replace(/\/+$/, "");
+
     const response = await axios.post(
-      `${mobitechConfig.baseUrl.replace(/\/+$/, "")}${SMS_ENDPOINT}`,
+      `${baseUrl}${SMS_ENDPOINT}`,
       payload,
       {
         headers: {
@@ -47,7 +62,7 @@ export const sendMobitechSms = async ({ mobile, message, senderName }) => {
           "Content-Type": "application/json",
           Accept: "application/json",
         },
-        timeout: 15000,
+        timeout: SMS_TIMEOUT_MS,
       },
     );
 
@@ -59,6 +74,7 @@ export const sendMobitechSms = async ({ mobile, message, senderName }) => {
       const error = new Error(
         result?.status_desc || "Mobitech rejected the SMS request.",
       );
+
       error.statusCode = 502;
       error.providerCode = result?.status_code;
       throw error;
@@ -68,7 +84,7 @@ export const sendMobitechSms = async ({ mobile, message, senderName }) => {
       success: true,
       message: result.status_desc || "SMS request accepted.",
       messageId: result.message_id,
-      mobile: result.mobile_number || payload.mobile,
+      mobile: result.mobile_number || normalizedMobile,
       networkId: result.network_id,
       messageCost: result.message_cost,
       creditBalance: result.credit_balance,
@@ -78,22 +94,30 @@ export const sendMobitechSms = async ({ mobile, message, senderName }) => {
       throw error;
     }
 
-    // Do not log the API key or request authentication headers.
+    // Log diagnostic information only. Never log credentials or message text.
     console.error("Mobitech SMS request failed:", {
       httpStatus: error.response?.status,
-      providerStatus: error.response?.data?.[0]?.status_code,
+      providerStatus: Array.isArray(error.response?.data)
+        ? error.response.data[0]?.status_code
+        : error.response?.data?.status_code,
+      code: error.code,
       message: error.message,
     });
 
+    const providerData = Array.isArray(error.response?.data)
+      ? error.response.data[0]
+      : error.response?.data;
+
     const apiError = new Error(
-      error.response?.data?.[0]?.status_desc ||
-        error.response?.data?.message ||
+      providerData?.status_desc ||
+        providerData?.message ||
         (error.code === "ECONNABORTED"
           ? "Mobitech SMS request timed out."
           : "Unable to send SMS through Mobitech."),
     );
 
     apiError.statusCode = 502;
+    apiError.providerCode = providerData?.status_code;
     throw apiError;
   }
 };

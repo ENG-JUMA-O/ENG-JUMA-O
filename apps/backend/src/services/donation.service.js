@@ -78,206 +78,154 @@ const donationService = {
     return findDonationByIdRepository(id);
   },
 
-  async handlePayHeroCallback(callback) {
-    const result = callback?.response;
+ 
+async handlePayHeroCallback(callback) {
+  const result = callback?.response;
 
-    // Validate the required callback fields.
-    if (
-      callback?.status !== true ||
-      !result?.ExternalReference ||
-      !result?.CheckoutRequestID ||
-      result?.Amount == null ||
-      result?.ResultCode == null ||
-      !result?.Status
-    ) {
-      const error = new Error(
-        "Invalid PayHero callback payload",
-      );
-      error.statusCode = 400;
-      throw error;
-    }
+  if (
+    callback?.status !== true ||
+    !result?.ExternalReference ||
+    !result?.CheckoutRequestID ||
+    result?.Amount == null ||
+    result?.ResultCode == null ||
+    !result?.Status
+  ) {
+    const error = new Error("Invalid PayHero callback payload");
+    error.statusCode = 400;
+    throw error;
+  }
 
-    const donation =
-      await findDonationByExternalReferenceRepository(
-        result.ExternalReference,
-      );
+  const donation =
+    await findDonationByExternalReferenceRepository(
+      result.ExternalReference,
+    );
 
-    if (!donation) {
-      const error = new Error("Donation not found");
-      error.statusCode = 404;
-      throw error;
-    }
+  if (!donation) {
+    const error = new Error("Donation not found");
+    error.statusCode = 404;
+    throw error;
+  }
 
-    // Validate the amount before changing the donation.
-    if (
-      !Number.isFinite(Number(result.Amount)) ||
-      Number(result.Amount) !== donation.amount
-    ) {
-      const error = new Error(
-        "Payment amount does not match donation",
-      );
-      error.statusCode = 400;
-      throw error;
-    }
+  // Never allow a callback to overwrite an existing success.
+  if (donation.status === "SUCCESS") {
+    await notificationService.createDonationNotifications(donation);
 
-    // Validate the checkout reference if it was already saved.
-    if (
-      donation.checkoutRequestId &&
-      donation.checkoutRequestId !== result.CheckoutRequestID
-    ) {
-      const error = new Error("Checkout reference mismatch");
-      error.statusCode = 400;
-      throw error;
-    }
-
-    const paymentStatus = String(result.Status)
-      .trim()
-      .toLowerCase();
-
-    const resultCode = Number(result.ResultCode);
-
-    const paymentSucceeded =
-      resultCode === 0 && paymentStatus === "success";
-
-    const paymentCancelled =
-      CANCELLED_STATUSES.includes(paymentStatus);
-
-    const paymentPending =
-      PENDING_STATUSES.includes(paymentStatus);
-
-    const nextStatus = paymentSucceeded
-      ? "SUCCESS"
-      : paymentCancelled
-        ? "CANCELLED"
-        : paymentPending
-          ? "PENDING"
-          : "FAILED";
-
-    // Never downgrade an already-confirmed successful payment.
-    if (donation.status !== "SUCCESS") {
-      const updateData = {
-        checkoutRequestId: result.CheckoutRequestID,
-        merchantRequestId:
-          result.MerchantRequestID ?? undefined,
-        status: nextStatus,
-        providerResultCode: String(result.ResultCode),
-        providerResultDescription:
-          result.ResultDesc ?? null,
-
-        ...(paymentSucceeded
-          ? {
-              mpesaReceiptNumber:
-                result.MpesaReceiptNumber || undefined,
-              paidAt: donation.paidAt ?? new Date(),
-            }
-          : {}),
-      };
-
-      if (paymentSucceeded) {
-        // Commit payment confirmation before sending any SMS.
-        await prisma.$transaction(async (tx) => {
-          await tx.donation.updateMany({
-            where: {
-              id: donation.id,
-              status: { not: "SUCCESS" },
-            },
-            data: updateData,
-          });
-
-          const current = await tx.donation.findUnique({
-            where: { id: donation.id },
-            select: { status: true },
-          });
-
-          if (current?.status !== "SUCCESS") {
-            throw new Error(
-              "Unable to confirm donation success",
-            );
-          }
-        });
-      } else {
-        await updateDonationRepository(
-          donation.id,
-          updateData,
-        );
-      }
-    }
-
-    // Only successful payments can trigger donation SMS messages.
-    if (
-      !paymentSucceeded &&
-      donation.status !== "SUCCESS"
-    ) {
-      return {
-        success: true,
-        message: "Payment callback processed",
-        paymentStatus: nextStatus,
-      };
-    }
-
-    try {
-      // Retrieve the saved receipt and latest donation state.
-      const confirmedDonation =
-        await findDonationByIdRepository(donation.id);
-
-      if (
-        !confirmedDonation ||
-        confirmedDonation.status !== "SUCCESS"
-      ) {
-        throw new Error(
-          "Donation is not confirmed as successful",
-        );
-      }
-
-      // Create donor and recipient notification records.
-      await notificationService.createDonationNotifications(
-        confirmedDonation,
+    const notifications =
+      await notificationService.sendDonationNotifications(
+        donation.id,
+        { retryFailed: true },
       );
 
-      // Attempt to send eligible notification records.
-      const notificationResult =
-        await notificationService.sendDonationNotifications(
-          donation.id,
-        );
+    return {
+      success: true,
+      message: "Donation was already confirmed",
+      paymentStatus: "SUCCESS",
+      notifications,
+    };
+  }
 
-      if (!notificationResult.success) {
-        console.error(
-          "One or more donation SMS notifications failed",
-          {
-            donationId: donation.id,
-            notificationResult,
-          },
-        );
-      }
+  if (
+    Number(result.Amount) !== donation.amount ||
+    !Number.isFinite(Number(result.Amount))
+  ) {
+    const error = new Error("Payment amount mismatch");
+    error.statusCode = 400;
+    throw error;
+  }
 
-      return {
-        success: true,
-        message: "Payment confirmed",
-        paymentStatus: "SUCCESS",
-        notifications: notificationResult,
-      };
-    } catch (error) {
-      // Notification failure must not undo a confirmed payment.
-      console.error(
-        "Donation notification processing failed",
-        {
-          donationId: donation.id,
-          message: error.message,
-        },
+  if (
+    donation.checkoutRequestId &&
+    donation.checkoutRequestId !== result.CheckoutRequestID
+  ) {
+    const error = new Error("Checkout reference mismatch");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const status = String(result.Status).trim().toLowerCase();
+  const resultCode = Number(result.ResultCode);
+
+  const succeeded = status === "success" && resultCode === 0;
+  const cancelled = ["cancelled", "canceled"].includes(status);
+  const pending = ["pending", "queued", "processing", "initiated"].includes(status);
+
+  const nextStatus = succeeded
+    ? "SUCCESS"
+    : cancelled
+      ? "CANCELLED"
+      : pending
+        ? "PENDING"
+        : "FAILED";
+
+  if (succeeded && !result.MpesaReceiptNumber) {
+    const error = new Error("Successful payment has no M-Pesa receipt");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  await updateDonationRepository(donation.id, {
+    checkoutRequestId: result.CheckoutRequestID,
+    merchantRequestId: result.MerchantRequestID ?? undefined,
+    status: nextStatus,
+    providerResultCode: String(result.ResultCode),
+    providerResultDescription: result.ResultDesc ?? null,
+    ...(succeeded
+      ? {
+          mpesaReceiptNumber: result.MpesaReceiptNumber,
+          paidAt: new Date(),
+        }
+      : {}),
+  });
+
+  if (!succeeded) {
+    return {
+      success: true,
+      message: "Payment callback processed",
+      paymentStatus: nextStatus,
+    };
+  }
+
+  const confirmedDonation =
+    await findDonationByIdRepository(donation.id);
+
+  if (!confirmedDonation || confirmedDonation.status !== "SUCCESS") {
+    throw new Error("Donation success was not persisted");
+  }
+
+  try {
+    await notificationService.createDonationNotifications(
+      confirmedDonation,
+    );
+
+    const notifications =
+      await notificationService.sendDonationNotifications(
+        donation.id,
       );
 
-      return {
-        success: true,
-        message:
-          "Payment confirmed; notification processing failed",
-        paymentStatus: "SUCCESS",
-        notifications: {
-          success: false,
-          retryRequired: true,
-        },
-      };
-    }
-  },
+    return {
+      success: true,
+      message: "Payment confirmed",
+      paymentStatus: "SUCCESS",
+      notifications,
+    };
+  } catch (error) {
+    console.error("Notification processing failed", {
+      donationId: donation.id,
+      message: error.message,
+    });
+
+    return {
+      success: true,
+      message: "Payment confirmed; SMS processing needs retry",
+      paymentStatus: "SUCCESS",
+      notifications: {
+        success: false,
+        retryRequired: true,
+      },
+    };
+  }
+},
+
 };
 
 export default donationService;
