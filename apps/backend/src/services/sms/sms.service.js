@@ -1,23 +1,53 @@
 
 import axios from "axios";
+import http from "node:http";
+import https from "node:https";
 import mobitechConfig from "../../config/mobitech.config.js";
 import { normalizeKenyanPhone } from "../../utils/phone.util.js";
 
 const SMS_ENDPOINT = "/sms/sendsms";
 const SMS_TIMEOUT_MS = 15000;
 const MAX_SMS_LENGTH = 920;
-
 const LOG_PREFIX = "[MOBITECH SMS]";
+const IS_PRODUCTION = process.env.NODE_ENV === "production";
 
-/**
- * Send an SMS using the Mobitech SMS API.
- *
- * @param {Object} options
- * @param {string} options.mobile - Recipient phone number.
- * @param {string} options.message - SMS message.
- * @param {string} [options.senderName] - Optional sender name.
- * @returns {Promise<Object>} SMS provider result.
- */
+// Reuse TCP connections instead of opening a new connection for every SMS.
+const httpAgent = new http.Agent({
+  keepAlive: true,
+  maxSockets: 50,
+  maxFreeSockets: 10,
+});
+
+const httpsAgent = new https.Agent({
+  keepAlive: true,
+  maxSockets: 50,
+  maxFreeSockets: 10,
+});
+
+const smsClient = axios.create({
+  timeout: SMS_TIMEOUT_MS,
+  httpAgent,
+  httpsAgent,
+  headers: {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+  },
+});
+
+const createError = (message, statusCode, providerCode) => {
+  const error = new Error(message);
+  error.statusCode = statusCode;
+
+  if (providerCode != null) {
+    error.providerCode = providerCode;
+  }
+
+  return error;
+};
+
+const getProviderResult = (data) =>
+  Array.isArray(data) ? data[0] : data;
+
 export const sendMobitechSms = async ({
   mobile,
   message,
@@ -25,176 +55,91 @@ export const sendMobitechSms = async ({
 }) => {
   const startedAt = Date.now();
 
-  console.log(`${LOG_PREFIX} Starting SMS request`, {
-    timestamp: new Date().toISOString(),
-    mobileProvided: Boolean(mobile),
-    messageProvided:
-      typeof message === "string" && Boolean(message.trim()),
-    messageLength:
-      typeof message === "string" ? message.trim().length : 0,
-    senderNameProvided: Boolean(
-      senderName || mobitechConfig.senderName,
-    ),
-  });
-
-  // 1. Validate configuration.
-  // Keep the service ID as a string so that "0" is not rejected
-  // by JavaScript's falsy-value check.
-  const serviceId = String(
-    mobitechConfig.serviceId ?? "",
-  ).trim();
-
+  // Validate configuration.
+  const serviceId = String(mobitechConfig.serviceId ?? "").trim();
   const apiKey = String(mobitechConfig.apiKey ?? "").trim();
   const baseUrl = String(mobitechConfig.baseUrl ?? "")
     .trim()
     .replace(/\/+$/, "");
 
-  if (!apiKey || !baseUrl || serviceId.length === 0) {
-    console.error(`${LOG_PREFIX} Configuration missing`, {
-      apiKeyConfigured: Boolean(apiKey),
-      baseUrlConfigured: Boolean(baseUrl),
-      serviceIdConfigured: serviceId.length > 0,
-    });
-
-    const error = new Error(
+  if (!apiKey || !baseUrl || !serviceId) {
+    throw createError(
       "Mobitech API key, base URL, and service ID must be configured.",
+      500,
     );
-
-    error.statusCode = 500;
-    throw error;
   }
 
-  console.log(`${LOG_PREFIX} Configuration check passed`, {
-    apiKeyConfigured: true,
-    baseUrlConfigured: true,
-    serviceIdConfigured: true,
-  });
-
-  // 2. Validate message.
+  // Validate message.
   if (typeof message !== "string" || !message.trim()) {
-    console.error(`${LOG_PREFIX} Invalid SMS message`, {
-      reason: "Message is missing or empty",
-    });
-
-    const error = new Error("SMS message is required.");
-    error.statusCode = 400;
-    throw error;
+    throw createError("SMS message is required.", 400);
   }
 
   const trimmedMessage = message.trim();
 
   if (trimmedMessage.length > MAX_SMS_LENGTH) {
-    console.error(`${LOG_PREFIX} SMS message too long`, {
-      actualLength: trimmedMessage.length,
-      maximumLength: MAX_SMS_LENGTH,
-    });
-
-    const error = new Error(
+    throw createError(
       `SMS message cannot exceed ${MAX_SMS_LENGTH} characters.`,
+      400,
     );
-
-    error.statusCode = 400;
-    throw error;
   }
 
-  // 3. Normalize recipient phone number.
-  let normalizedMobile;
+  // Normalize recipient.
+  const normalizedMobile = normalizeKenyanPhone(mobile);
+  const resolvedSenderName =
+    senderName || mobitechConfig.senderName;
 
-  try {
-    normalizedMobile = normalizeKenyanPhone(mobile);
-
-    console.log(`${LOG_PREFIX} Phone number validated`, {
-      valid: true,
-      recipientSuffix: normalizedMobile.slice(-3),
-    });
-  } catch (error) {
-    console.error(
-      `${LOG_PREFIX} Phone number validation failed`,
-      {
-        message: error.message,
-      },
-    );
-
-    throw error;
+  if (!resolvedSenderName) {
+    throw createError("Mobitech sender name is required.", 500);
   }
 
-  // 4. Prepare request.
   const payload = {
     mobile: normalizedMobile,
-    sender_name:
-      senderName || mobitechConfig.senderName,
+    sender_name: resolvedSenderName,
     service_id: serviceId,
     response_type: mobitechConfig.responseType || "json",
     message: trimmedMessage,
   };
 
-  const requestUrl = `${baseUrl}${SMS_ENDPOINT}`;
-
-  console.log(`${LOG_PREFIX} Sending request to provider`, {
-    endpoint: requestUrl,
-    timeoutMs: SMS_TIMEOUT_MS,
-    serviceIdConfigured: true,
-    timestamp: new Date().toISOString(),
-  });
-
-  // 5. Send SMS request.
   try {
-    const response = await axios.post(requestUrl, payload, {
-      headers: {
-        h_api_key: apiKey,
-        "Content-Type": "application/json",
-        Accept: "application/json",
+    const response = await smsClient.post(
+      `${baseUrl}${SMS_ENDPOINT}`,
+      payload,
+      {
+        headers: {
+          h_api_key: apiKey,
+        },
       },
-      timeout: SMS_TIMEOUT_MS,
-    });
+    );
 
-    console.log(`${LOG_PREFIX} HTTP response received`, {
-      httpStatus: response.status,
-      durationMs: Date.now() - startedAt,
-      responseType: Array.isArray(response.data)
-        ? "array"
-        : typeof response.data,
-    });
+    const result = getProviderResult(response.data);
 
-    const result = Array.isArray(response.data)
-      ? response.data[0]
-      : response.data;
-
-    console.log(`${LOG_PREFIX} Provider result`, {
-      providerCode: result?.status_code ?? null,
-      providerMessage:
-        result?.status_desc ?? result?.message ?? null,
-      messageId: result?.message_id ?? null,
-      messageCost: result?.message_cost ?? null,
-      creditBalance: result?.credit_balance ?? null,
-    });
-
-    // 6. Check provider response.
-    if (String(result?.status_code) !== "1000") {
-      const error = new Error(
+    if (!result || String(result.status_code) !== "1000") {
+      const providerMessage =
         result?.status_desc ||
-          result?.message ||
-          "Mobitech rejected the SMS request.",
+        result?.message ||
+        "Mobitech rejected the SMS request.";
+
+      if (!IS_PRODUCTION) {
+        console.error(`${LOG_PREFIX} Provider rejected SMS`, {
+          providerCode: result?.status_code ?? null,
+          durationMs: Date.now() - startedAt,
+        });
+      }
+
+      throw createError(
+        providerMessage,
+        502,
+        result?.status_code,
       );
-
-      error.statusCode = 502;
-      error.providerCode = result?.status_code;
-
-      console.error(`${LOG_PREFIX} Provider rejected SMS`, {
-        providerCode: result?.status_code ?? null,
-        providerMessage:
-          result?.status_desc ?? result?.message ?? null,
-        durationMs: Date.now() - startedAt,
-      });
-
-      throw error;
     }
 
-    console.log(`${LOG_PREFIX} SMS request accepted`, {
-      messageId: result.message_id ?? null,
-      durationMs: Date.now() - startedAt,
-      timestamp: new Date().toISOString(),
-    });
+    // One concise log per successful request in development.
+    if (!IS_PRODUCTION) {
+      console.log(`${LOG_PREFIX} SMS accepted`, {
+        messageId: result.message_id ?? null,
+        durationMs: Date.now() - startedAt,
+      });
+    }
 
     return {
       success: true,
@@ -206,48 +151,39 @@ export const sendMobitechSms = async ({
       creditBalance: result.credit_balance,
     };
   } catch (error) {
-    // Preserve provider rejection details.
-    if (
-      error.providerCode !== undefined &&
-      error.providerCode !== null
-    ) {
+    // Preserve errors generated from provider rejection.
+    if (error.providerCode != null) {
       throw error;
     }
 
-    const providerData = Array.isArray(error.response?.data)
-      ? error.response.data[0]
-      : error.response?.data;
-
+    const providerResult = getProviderResult(error.response?.data);
     const timedOut =
       error.code === "ECONNABORTED" ||
       error.code === "ETIMEDOUT";
 
-    console.error(`${LOG_PREFIX} SMS request failed`, {
-      httpStatus: error.response?.status ?? null,
-      providerCode: providerData?.status_code ?? null,
-      providerMessage:
-        providerData?.status_desc ??
-        providerData?.message ??
-        null,
-      errorCode: error.code ?? null,
-      errorName: error.name,
-      errorMessage: error.message,
-      timedOut,
-      durationMs: Date.now() - startedAt,
-      timestamp: new Date().toISOString(),
-    });
+    const messageFromProvider =
+      providerResult?.status_desc ||
+      providerResult?.message;
 
-    const apiError = new Error(
-      providerData?.status_desc ||
-        providerData?.message ||
+    if (!IS_PRODUCTION) {
+      console.error(`${LOG_PREFIX} Request failed`, {
+        httpStatus: error.response?.status ?? null,
+        providerCode: providerResult?.status_code ?? null,
+        errorCode: error.code ?? null,
+        durationMs: Date.now() - startedAt,
+        timedOut,
+      });
+    }
+
+    // Preserve the actual provider response when available.
+    throw createError(
+      messageFromProvider ||
         (timedOut
           ? "Mobitech SMS request timed out."
           : "Unable to send SMS through Mobitech."),
+      502,
+      providerResult?.status_code,
     );
-
-    apiError.statusCode = 502;
-    apiError.providerCode = providerData?.status_code;
-    throw apiError;
   }
 };
 

@@ -1,21 +1,95 @@
 
 import axios from "axios";
+import http from "node:http";
+import https from "node:https";
 import payHeroConfig, {
   validatePayHeroConfig,
 } from "../config/payhero.config.js";
 
+const REQUEST_TIMEOUT_MS = 12000;
+const LOG_PREFIX = "[PAYHERO]";
+
+const httpAgent = new http.Agent({
+  keepAlive: true,
+  maxSockets: 50,
+  maxFreeSockets: 10,
+});
+
+const httpsAgent = new https.Agent({
+  keepAlive: true,
+  maxSockets: 50,
+  maxFreeSockets: 10,
+});
+
 const payHeroClient = axios.create({
   baseURL: payHeroConfig.baseUrl,
-  timeout: 12000,
+  timeout: REQUEST_TIMEOUT_MS,
+  httpAgent,
+  httpsAgent,
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
   },
 });
 
+const createError = (message, statusCode, cause) => {
+  const error = new Error(message);
+  error.statusCode = statusCode;
+
+  if (cause) {
+    error.cause = cause;
+  }
+
+  return error;
+};
+
+const getCredentials = (config) =>
+  Buffer.from(
+    `${config.username}:${config.password}`,
+    "utf8",
+  ).toString("base64");
+
+const getRequestError = (cause, operation) => {
+  if (cause?.statusCode) {
+    return cause;
+  }
+
+  if (!axios.isAxiosError(cause)) {
+    return createError(
+      `Unexpected PayHero ${operation} error.`,
+      500,
+      cause,
+    );
+  }
+
+  const timedOut =
+    cause.code === "ECONNABORTED" ||
+    cause.code === "ETIMEDOUT";
+
+  const message = timedOut
+    ? `PayHero ${operation} timed out. Verify payment status before retrying.`
+    : cause.response
+      ? `PayHero ${operation} failed.`
+      : `Unable to connect to PayHero during ${operation}.`;
+
+  const statusCode = timedOut
+    ? 504
+    : cause.response
+      ? 502
+      : 503;
+
+  return createError(message, statusCode, cause);
+};
+
+const isObjectResponse = (data) =>
+  data !== null &&
+  typeof data === "object" &&
+  !Array.isArray(data);
+
 const payHeroService = {
   /**
    * Initiate an M-Pesa STK Push payment.
+   * A successful response does not mean payment is complete.
    */
   async initiatePayment({
     amount,
@@ -23,36 +97,26 @@ const payHeroService = {
     external_reference,
     customer_name,
   }) {
-    const config = validatePayHeroConfig();
-
     if (!Number.isSafeInteger(amount) || amount < 1) {
-      const error = new Error("Invalid payment amount.");
-      error.statusCode = 400;
-      throw error;
+      throw createError("Invalid payment amount.", 400);
     }
 
     if (
       typeof phone_number !== "string" ||
       !/^254[17]\d{8}$/.test(phone_number)
     ) {
-      const error = new Error("Invalid Kenyan phone number.");
-      error.statusCode = 400;
-      throw error;
+      throw createError("Invalid Kenyan phone number.", 400);
     }
 
     if (
       typeof external_reference !== "string" ||
       !/^DON-[\w-]{1,100}$/.test(external_reference)
     ) {
-      const error = new Error("Invalid payment reference.");
-      error.statusCode = 400;
-      throw error;
+      throw createError("Invalid payment reference.", 400);
     }
 
-    const credentials = Buffer.from(
-      `${config.username}:${config.password}`,
-      "utf8",
-    ).toString("base64");
+    const config = validatePayHeroConfig();
+    const authorization = `Basic ${getCredentials(config)}`;
 
     try {
       const response = await payHeroClient.post(
@@ -63,128 +127,80 @@ const payHeroService = {
           channel_id: config.channelId,
           provider: "m-pesa",
           external_reference,
-          customer_name: customer_name || "Anonymous",
+          customer_name:
+            typeof customer_name === "string" &&
+            customer_name.trim()
+              ? customer_name.trim()
+              : "Anonymous",
           callback_url: config.callbackUrl,
         },
         {
           headers: {
-            Authorization: `Basic ${credentials}`,
+            Authorization: authorization,
           },
         },
       );
 
-      if (
-        !response.data ||
-        typeof response.data !== "object"
-      ) {
-        const error = new Error(
+      if (!isObjectResponse(response.data)) {
+        throw createError(
           "Invalid response from PayHero.",
+          502,
         );
-        error.statusCode = 502;
-        throw error;
       }
 
       return response.data;
     } catch (cause) {
-      if (cause.statusCode) {
-        throw cause;
-      }
-
-      const error = new Error(
-        axios.isAxiosError(cause)
-          ? cause.code === "ECONNABORTED" ||
-            cause.code === "ETIMEDOUT"
-            ? "PayHero request timed out. Verify payment status before retrying."
-            : "PayHero payment request failed."
-          : "Unexpected PayHero error.",
-      );
-
-      error.statusCode = axios.isAxiosError(cause)
-        ? cause.response
-          ? 502
-          : 503
-        : 500;
-
-      error.cause = cause;
-      throw error;
+      throw getRequestError(cause, "payment request");
     }
   },
 
   /**
-   * Verify a transaction using PayHero's status endpoint.
-   *
-   * This returns the provider response. The caller must still
-   * compare the verified transaction against the saved donation.
+   * Check transaction status with PayHero.
+   * The caller must validate the transaction against the
+   * persisted donation before marking a donation successful.
    */
   async verifyTransactionStatus(reference) {
-    const config = validatePayHeroConfig();
-
     if (
       typeof reference !== "string" ||
       !reference.trim()
     ) {
-      const error = new Error(
+      throw createError(
         "A transaction reference is required.",
+        400,
       );
-      error.statusCode = 400;
-      throw error;
     }
 
-    const credentials = Buffer.from(
-      `${config.username}:${config.password}`,
-      "utf8",
-    ).toString("base64");
+    const config = validatePayHeroConfig();
+    const authorization = `Basic ${getCredentials(config)}`;
 
     try {
       const statusUrl = new URL(
         "/api/v2/transaction-status",
         payHeroConfig.baseUrl,
-      );
+      ).toString();
 
-      const response = await axios.get(
-        statusUrl.toString(),
-        {
-          params: {
-            reference: reference.trim(),
-          },
-          headers: {
-            Authorization: `Basic ${credentials}`,
-            Accept: "application/json",
-          },
-          timeout: 12000,
+      const response = await payHeroClient.get(statusUrl, {
+        params: {
+          reference: reference.trim(),
         },
-      );
+        headers: {
+          Authorization: authorization,
+        },
+      });
 
       if (
-        !response.data ||
-        typeof response.data !== "object" ||
+        !isObjectResponse(response.data) ||
         typeof response.data.status !== "string"
       ) {
-        const error = new Error(
+        throw createError(
           "Invalid transaction status response from PayHero.",
+          502,
         );
-        error.statusCode = 502;
-        throw error;
       }
 
       return response.data;
     } catch (cause) {
-      if (cause.statusCode) {
-        throw cause;
-      }
-
-      const error = new Error(
-        "Unable to verify the transaction with PayHero.",
-      );
-
-      error.statusCode = axios.isAxiosError(cause)
-        ? cause.response
-          ? 502
-          : 503
-        : 500;
-
-      error.cause = cause;
-      throw error;
+      throw getRequestError(cause, "transaction verification");
     }
   },
 };
