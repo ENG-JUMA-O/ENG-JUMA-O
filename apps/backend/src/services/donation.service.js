@@ -1,7 +1,7 @@
 
 import axios from "axios";
-import mobitechConfig from "../../config/mobitech.config.js";
-import { normalizeKenyanPhone } from "../../utils/phone.util.js";
+import mobitechConfig from "../config/mobitech.config.js";
+import { normalizeKenyanPhone } from "../utils/phone.util.js";
 
 const SMS_ENDPOINT = "/sms/sendsms";
 const SMS_TIMEOUT_MS = 15000;
