@@ -2,6 +2,7 @@
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
+import morgan from "morgan";
 
 import { generalRateLimiter } from "./middlewares/rateLimiter.middleware.js";
 import errorMiddleware from "./middlewares/error.middleware.js";
@@ -45,7 +46,7 @@ app.use(
     optionsSuccessStatus: 204,
   }),
 );
-
+app.use(morgan("dev"));
 app.use(express.json({ limit: "10kb" }));
 
 app.use("/api", generalRateLimiter);
