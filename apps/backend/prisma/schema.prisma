@@ -16,6 +16,7 @@ enum DonationStatus {
 
 enum NotificationType {
   SUPPORTER_DONATION_RECEIPT
+  COFFEE_RECIPIENT_NOTIFICATION
   ADMIN_NEW_DONATION
 }
 
