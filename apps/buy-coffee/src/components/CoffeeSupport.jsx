@@ -189,7 +189,7 @@ export default function CoffeeSupport() {
 
     if (!normalizedPhone) {
       showStatus(
-        'Enter a valid Kenyan phone number, for example 0712345678.',
+        'Enter a valid Kenyan phone number, for example 07xxxxxxx.',
         'error',
       )
       return
