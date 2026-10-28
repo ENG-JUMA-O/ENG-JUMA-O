@@ -18,6 +18,7 @@ app.use(helmet());
 
 const allowedOrigins = [
   "https://buy-me-coffee-kzvi.onrender.com",
+  "https://eng-juma-o.onrender.com",
   "http://localhost:5173",
   "http://127.0.0.1:5173",
 ];
