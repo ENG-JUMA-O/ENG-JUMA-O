@@ -1,50 +1,106 @@
+
 <!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
     <title>ENG Douglas Oroko — Software Developer</title>
+
+    <!-- SEO -->
     <meta
       name="description"
-      content="Portfolio of ENG Douglas Oroko, a software developer focused on UI/UX design, frontend and backend development, and cross-platform applications."
+      content="Explore the portfolio of ENG Douglas Oroko, a software developer building modern web applications, intuitive UI/UX experiences, backend APIs, and cross-platform applications."
     />
+    <meta name="author" content="ENG Douglas Oroko" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <meta name="googlebot" content="index, follow" />
     <meta name="theme-color" content="#F7FBF9" />
-    <link rel="icon" type="image/svg+xml" href="%BASE_URL%favicon.svg" />
+    <meta name="color-scheme" content="light dark" />
 
+    <!-- Canonical URL: update to your actual production domain -->
+    <link rel="canonical" href="https://eng-juma-o.onrender.com/" />
+
+    <!-- Favicon and app icons -->
+    <link rel="icon" type="image/svg+xml" href="%BASE_URL%favicon.svg" />
+    <link rel="alternate icon" href="%BASE_URL%favicon.ico" />
+    <link rel="apple-touch-icon" href="%BASE_URL%apple-touch-icon.png" />
+
+    <!-- Open Graph / Facebook / LinkedIn -->
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="ENG Douglas Oroko" />
-    <meta property="og:title" content="ENG Douglas Oroko — Software Developer" />
+    <meta property="og:site_name" content="ENG Douglas Oroko Portfolio" />
+    <meta
+      property="og:title"
+      content="ENG Douglas Oroko — Software Developer"
+    />
     <meta
       property="og:description"
-      content="Modern, intuitive and scalable digital experiences — UI/UX, frontend, backend and cross-platform development."
+      content="Discover software projects, technical skills, and digital experiences created by ENG Douglas Oroko."
     />
-    <meta name="twitter:card" content="summary" />
-    <meta name="twitter:title" content="ENG Douglas Oroko — Software Developer" />
+    <meta property="og:url" content="https://eng-juma-o.onrender.com/" />
+    <meta property="og:locale" content="en_KE" />
+
+    <!-- Add this image in public/og-image.png before enabling the tag -->
     <meta
-      name="twitter:description"
-      content="Modern, intuitive and scalable digital experiences — UI/UX, frontend, backend and cross-platform development."
+      property="og:image"
+      content="https://eng-juma-o.onrender.com/og-image.png"
+    />
+    <meta
+      property="og:image:alt"
+      content="ENG Douglas Oroko — Software Developer Portfolio"
     />
 
+    <!-- X / Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:title"
+      content="ENG Douglas Oroko — Software Developer"
+    />
+    <meta
+      name="twitter:description"
+      content="Explore software development projects, UI/UX design, frontend engineering, backend APIs, and cross-platform applications."
+    />
+    <meta
+      name="twitter:image"
+      content="https://eng-juma-o.onrender.com/og-image.png"
+    />
+    <meta
+      name="twitter:image:alt"
+      content="ENG Douglas Oroko Software Developer Portfolio"
+    />
+
+    <!-- Performance: fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="preconnect"
+      href="https://fonts.gstatic.com"
+      crossorigin
+    />
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
       rel="stylesheet"
     />
 
+    <!-- Apply the saved theme before React renders -->
     <script>
-      // Light is the default theme. Only an explicit earlier choice switches to dark.
       try {
-        var saved = localStorage.getItem('theme')
-        document.documentElement.dataset.theme = saved === 'dark' ? 'dark' : 'light'
-      } catch (e) {
+        const savedTheme = localStorage.getItem('theme')
+        document.documentElement.dataset.theme =
+          savedTheme === 'dark' ? 'dark' : 'light'
+      } catch {
         document.documentElement.dataset.theme = 'light'
       }
     </script>
   </head>
+
   <body>
     <div id="root"></div>
-    <noscript>This portfolio needs JavaScript enabled to display its content.</noscript>
-    <script type="module" src="/src/main.jsx"></script>
+
+    <noscript>
+      This portfolio requires JavaScript to display its content.
+      Please enable JavaScript in your browser.
+    </noscript>
+
+    <script type="module" src="%BASE_URL%src/main.jsx"></script>
   </body>
 </html>

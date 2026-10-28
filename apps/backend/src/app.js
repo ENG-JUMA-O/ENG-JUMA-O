@@ -9,6 +9,7 @@ import errorMiddleware from "./middlewares/error.middleware.js";
 
 import healthRoutes from "./routes/health.routes.js";
 import donationRoutes from "./routes/donation.routes.js";
+import githubRoutes from "./routes/github.routes.js";
 
 const app = express();
 
@@ -52,9 +53,8 @@ app.use(express.json({ limit: "10kb" }));
 app.use("/api", generalRateLimiter);
 
 app.use("/", healthRoutes);
-
-// Donation endpoints
 app.use("/api/donations", donationRoutes);
+app.use("/api/github", githubRoutes);
 
 // Keep the error handler last
 app.use(errorMiddleware);
