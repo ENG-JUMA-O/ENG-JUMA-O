@@ -71,7 +71,7 @@ export default function Gallery() {
         </p>
       </PageHeader>
 
-      <section aria-label="Gallery" className="bg-surface py-12 sm:py-16">
+      <section aria-label="Gallery" className="bg-page py-12 sm:py-16">
         <div className="container-page">
           <div role="group" aria-label="Filter gallery by category" className="flex flex-wrap gap-2">
             {categories.map((name) => {

@@ -18,8 +18,8 @@ export default function Process() {
         {processSteps.map((step, index) => (
           <li key={step.id}>
             <Reveal delay={index * 0.07} className="h-full">
-              <div className="relative h-full rounded-xl border border-line bg-surface p-6">
-                <span className="font-display text-4xl font-bold text-brand/25" aria-hidden="true">
+              <div className="relative h-full rounded-2xl border border-line bg-surface p-6 shadow-soft">
+                <span className="font-display text-4xl font-bold text-brand-bright/40" aria-hidden="true">
                   {String(index + 1).padStart(2, '0')}
                 </span>
                 <h3 className="mt-3 text-lg font-semibold text-ink">

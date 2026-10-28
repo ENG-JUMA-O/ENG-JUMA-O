@@ -54,11 +54,11 @@ export default function Navbar() {
   return (
     <header
       className={`sticky top-0 z-40 w-full border-b transition-[background-color,box-shadow,border-color] duration-300 ${
-        scrolled ? 'border-line bg-surface/90 shadow-sm backdrop-blur-md' : 'border-transparent bg-surface'
+        scrolled ? 'border-line bg-surface/90 shadow-soft backdrop-blur-md' : 'border-line/60 bg-surface'
       }`}
     >
       <nav aria-label="Primary">
-        <div className="container-page flex h-16 items-center justify-between gap-2">
+        <div className="container-page flex h-16 items-center justify-between gap-2 sm:h-[4.25rem]">
           <Link to="/" className="flex min-w-0 items-center gap-3" aria-label={`${profile.name} — home`}>
             <Logo className="h-10 w-10 shrink-0" />
             <span className="flex min-w-0 flex-col leading-tight">
@@ -75,10 +75,10 @@ export default function Navbar() {
                   <Link
                     to={link.to}
                     aria-current={active ? 'page' : undefined}
-                    className={`relative rounded-md px-3 py-2 text-sm font-medium transition-colors after:absolute after:inset-x-3 after:-bottom-0.5 after:h-0.5 after:rounded-full after:bg-brand after:transition-transform after:duration-200 ${
+                    className={`relative rounded-lg px-3 py-2 text-sm font-medium transition-colors after:absolute after:inset-x-3 after:-bottom-0.5 after:h-0.5 after:rounded-full after:bg-brand-bright after:transition-transform after:duration-200 ${
                       active
-                        ? 'text-link after:scale-x-100'
-                        : 'text-muted after:scale-x-0 hover:text-ink hover:after:scale-x-100'
+                        ? 'bg-brand-soft text-link after:scale-x-100'
+                        : 'text-muted after:scale-x-0 hover:bg-surface-alt hover:text-ink hover:after:scale-x-100'
                     }`}
                   >
                     {link.label}
@@ -98,7 +98,7 @@ export default function Navbar() {
               aria-expanded={open}
               aria-controls="mobile-menu"
               aria-label={open ? 'Close menu' : 'Open menu'}
-              className="grid h-10 w-10 place-items-center rounded-lg border border-line bg-surface text-ink transition-colors hover:border-brand hover:text-link lg:hidden"
+              className="grid h-11 w-11 place-items-center rounded-xl border border-line bg-surface text-ink transition-colors hover:border-brand hover:bg-brand-soft hover:text-link lg:hidden"
             >
               {open ? <X className="h-5 w-5" aria-hidden="true" /> : <Menu className="h-5 w-5" aria-hidden="true" />}
             </button>

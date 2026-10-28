@@ -7,8 +7,8 @@ export default function Logo({ className = 'h-10 w-10' }) {
     <svg viewBox="0 0 64 64" className={className} aria-hidden="true" focusable="false">
       <defs>
         <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#2563EB" />
-          <stop offset="1" stopColor="#1D4ED8" />
+          <stop offset="0" stopColor="#3BAA75" />
+          <stop offset="1" stopColor="#176B4D" />
         </linearGradient>
       </defs>
       <rect width="64" height="64" rx="16" fill={`url(#${gradientId})`} />
@@ -24,7 +24,7 @@ export default function Logo({ className = 'h-10 w-10' }) {
       >
         DO
       </text>
-      <circle cx="51" cy="15" r="4" fill="#06B6D4" />
+      <circle cx="51" cy="14" r="4.5" fill="#A7E8BD" />
     </svg>
   )
 }

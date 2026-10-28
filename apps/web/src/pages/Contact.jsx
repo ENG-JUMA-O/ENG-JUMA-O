@@ -55,7 +55,7 @@ export default function Contact() {
         </p>
       </PageHeader>
 
-      <section aria-label="Contact" className="bg-surface py-12 sm:py-16 lg:py-20">
+      <section aria-label="Contact" className="bg-page py-12 sm:py-16 lg:py-20">
         <div className="container-page grid gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16">
           <Reveal>
             <h2 className="text-2xl font-bold tracking-tight text-ink">Get in touch</h2>
@@ -70,9 +70,9 @@ export default function Contact() {
                     <a
                       href={channel.href}
                       {...(channel.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-                      className="group flex items-center gap-4 rounded-xl border border-line bg-surface p-4 transition duration-200 hover:border-brand/50 hover:shadow-md hover:shadow-brand/10"
+                      className="group flex items-center gap-4 rounded-2xl border border-line bg-surface p-4 shadow-soft transition duration-200 hover:border-brand-bright/50 hover:shadow-card"
                     >
-                      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-brand-soft text-link transition-colors group-hover:bg-brand group-hover:text-white">
+                      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-leaf-soft text-brand-deep transition-colors group-hover:bg-brand group-hover:text-white">
                         {channel.icon}
                       </span>
                       <span className="min-w-0">
@@ -95,7 +95,7 @@ export default function Contact() {
           </Reveal>
 
           <Reveal delay={0.1}>
-            <div className="rounded-2xl border border-line bg-surface p-6 shadow-sm sm:p-8">
+            <div className="rounded-3xl border border-line bg-surface p-5 shadow-card min-[400px]:p-6 sm:p-8">
               <h2 className="text-xl font-semibold text-ink">Send a message</h2>
               <p className="mt-1 mb-6 text-sm text-muted">All fields are required.</p>
               <ContactForm />

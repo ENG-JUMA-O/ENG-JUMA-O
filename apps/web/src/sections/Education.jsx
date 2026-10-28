@@ -65,7 +65,7 @@ function EducationCard({ item, index, full }) {
 
   return (
     <Reveal delay={index * 0.08} className="h-full">
-      <article className="group relative h-full overflow-hidden rounded-2xl border border-line bg-surface p-5 transition-all duration-300 hover:-translate-y-1 hover:border-brand/50 hover:shadow-lg sm:p-6">
+      <article className="group relative h-full overflow-hidden rounded-2xl border border-line bg-surface p-5 transition-all duration-300 hover:-translate-y-1 hover:border-brand-bright/50 hover:shadow-lg sm:p-6">
         <div
           aria-hidden="true"
           className="absolute inset-x-0 top-0 h-1 bg-brand opacity-70 transition-opacity group-hover:opacity-100"

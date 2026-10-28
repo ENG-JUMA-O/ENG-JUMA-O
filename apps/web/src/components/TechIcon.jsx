@@ -59,7 +59,7 @@ const icons = {
     </>
   ),
   sql: (
-    <g fill="none" stroke="#2563EB" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+    <g fill="none" stroke="#1F7F59" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
       <ellipse cx="12" cy="5.5" rx="8" ry="3" />
       <path d="M4 5.5v13c0 1.7 3.6 3 8 3s8-1.3 8-3v-13" />
       <path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3" />

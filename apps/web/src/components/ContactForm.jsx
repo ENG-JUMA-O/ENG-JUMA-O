@@ -8,8 +8,8 @@ import { FIELD_LIMITS, validateContact } from '../utils/validation.js'
 const EMPTY = { name: '', email: '', subject: '', message: '', company: '' }
 
 const inputClass = (hasError) =>
-  `w-full rounded-lg border bg-surface px-3.5 py-2.5 text-sm text-ink transition placeholder:text-muted focus:outline-none focus:ring-2 ${
-    hasError ? 'border-danger focus:ring-danger/30' : 'border-line focus:border-brand focus:ring-brand/30'
+  `w-full scroll-mt-28 rounded-xl border bg-surface px-4 py-3 text-base text-ink shadow-soft transition placeholder:text-muted/80 focus:outline-none focus:ring-4 sm:text-sm ${
+    hasError ? 'border-danger focus:ring-danger/20' : 'border-line hover:border-brand-bright/60 focus:border-brand focus:ring-leaf/50'
   }`
 
 function Field({ id, label, error, children }) {
@@ -182,7 +182,7 @@ export default function ContactForm() {
       </div>
 
       <div className="flex flex-wrap items-center gap-4">
-        <Button type="submit" disabled={sending} aria-disabled={sending} className="min-w-40 disabled:cursor-not-allowed disabled:opacity-70">
+        <Button type="submit" disabled={sending} aria-disabled={sending} className="w-full min-w-40 disabled:cursor-not-allowed sm:w-auto">
           {sending ? (
             <>
               <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" />
@@ -199,7 +199,7 @@ export default function ContactForm() {
 
       <div aria-live="polite">
         {status === 'success' && (
-          <p role="status" className="flex items-start gap-2 rounded-lg border border-success/40 bg-success-soft p-4 text-sm text-success">
+          <p role="status" className="flex items-start gap-2 rounded-xl border border-success/40 bg-success-soft p-4 text-sm text-success">
             <CircleCheck className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
             <span>Thank you — your message was sent. I'll get back to you as soon as I can.</span>
           </p>

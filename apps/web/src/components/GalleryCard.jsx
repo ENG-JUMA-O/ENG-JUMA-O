@@ -17,7 +17,7 @@ export default function GalleryCard({ item, index = 0, onOpen }) {
         type="button"
         onClick={onOpen}
         aria-haspopup="dialog"
-        className="group block w-full overflow-hidden rounded-xl border border-line bg-surface text-left transition duration-300 hover:-translate-y-1 hover:border-brand/40 hover:shadow-lg hover:shadow-brand/10"
+        className="group block w-full overflow-hidden rounded-xl border border-line bg-surface text-left transition duration-300 hover:-translate-y-1 hover:border-brand-bright/50 hover:shadow-card"
       >
         <div className="relative">
           <SmartImage

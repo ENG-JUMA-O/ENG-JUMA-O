@@ -7,10 +7,10 @@ export default function ContactCta() {
   return (
     <Section id="cta" labelledBy="cta-title">
       <Reveal>
-        <div className="relative overflow-hidden rounded-2xl bg-linear-to-br from-brand to-brand-deep px-6 py-12 text-center text-white sm:px-12 sm:py-16">
+        <div className="relative overflow-hidden rounded-3xl bg-linear-to-br from-brand-deep to-brand px-6 py-12 text-center text-white sm:px-12 sm:py-16">
           <div aria-hidden="true" className="bg-grid pointer-events-none absolute inset-0 opacity-20" />
           <div className="relative">
-            <h2 id="cta-title" className="text-3xl font-bold tracking-tight sm:text-4xl">
+            <h2 id="cta-title" className="text-2xl font-bold tracking-tight min-[400px]:text-3xl sm:text-4xl">
               Let's Build Something Great
             </h2>
             <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-white/90">

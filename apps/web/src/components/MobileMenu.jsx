@@ -17,9 +17,9 @@ export default function MobileMenu({ open, links, activeTo, onNavigate }) {
           animate={{ height: 'auto', opacity: 1 }}
           exit={{ height: 0, opacity: 0 }}
           transition={{ duration, ease: 'easeOut' }}
-          className="overflow-hidden border-t border-line bg-surface lg:hidden"
+          className="overflow-hidden border-t border-line bg-surface shadow-card lg:hidden"
         >
-          <div className="container-page max-h-[calc(100dvh-4rem)] overflow-y-auto py-4">
+          <div className="container-page max-h-[calc(100dvh-4rem)] overscroll-contain overflow-y-auto py-4">
             <ul className="flex flex-col gap-1">
               {links.map((link) => {
                 const active = link.to === activeTo
@@ -30,7 +30,7 @@ export default function MobileMenu({ open, links, activeTo, onNavigate }) {
                       onClick={onNavigate}
                       aria-current={active ? 'page' : undefined}
                       className={`flex h-12 items-center rounded-lg px-3 text-base font-medium transition-colors ${
-                        active ? 'bg-brand-soft text-link' : 'text-ink hover:bg-surface-alt'
+                        active ? 'bg-brand-soft font-semibold text-link' : 'text-ink hover:bg-surface-alt'
                       }`}
                     >
                       {link.label}

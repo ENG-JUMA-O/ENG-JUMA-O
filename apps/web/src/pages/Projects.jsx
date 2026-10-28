@@ -97,7 +97,7 @@ export default function Projects() {
         </p>
       </PageHeader>
 
-      <section aria-label="Project catalogue" className="bg-surface py-12 sm:py-16">
+      <section aria-label="Project catalogue" className="bg-page py-12 sm:py-16">
         <div className="container-page">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div role="group" aria-label="Filter by category" className="flex flex-wrap gap-2">

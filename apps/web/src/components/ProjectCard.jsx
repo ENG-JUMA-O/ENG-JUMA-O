@@ -11,11 +11,11 @@ export default function ProjectCard({ project, index = 0 }) {
   const live = safeUrl(project.live)
   const detailsPath = `/projects/${project.slug}`
   const linkClass =
-    'inline-flex h-9 items-center gap-1.5 rounded-lg border border-line bg-surface px-3 text-[13px] font-semibold text-ink transition-colors hover:border-brand hover:text-link'
+    'inline-flex h-10 items-center gap-1.5 rounded-lg border border-line bg-surface px-3 text-[13px] font-semibold text-ink transition-colors hover:border-brand hover:text-link'
 
   return (
     <Reveal delay={Math.min(index, 5) * 0.06} className="h-full">
-      <article className="group flex h-full flex-col overflow-hidden rounded-xl border border-line bg-surface transition duration-300 hover:-translate-y-1 hover:border-brand/40 hover:shadow-lg hover:shadow-brand/10 focus-within:border-brand/60">
+      <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-soft transition duration-300 hover:-translate-y-1 hover:border-brand-bright/50 hover:shadow-card focus-within:border-brand-bright">
         <Link to={detailsPath} tabIndex={-1} aria-hidden="true" className="block">
           <SmartImage
             src={project.image}
@@ -27,7 +27,7 @@ export default function ProjectCard({ project, index = 0 }) {
 
         <div className="flex flex-1 flex-col p-5">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded-full bg-brand-soft px-2.5 py-1 text-xs font-medium text-link">{project.category}</span>
+            <span className="rounded-full bg-leaf-soft px-2.5 py-1 text-xs font-medium text-brand-deep">{project.category}</span>
             {project.placeholder && (
               <span className="rounded-full border border-dashed border-line px-2.5 py-1 text-xs font-medium text-muted">
                 Sample placeholder
@@ -45,7 +45,7 @@ export default function ProjectCard({ project, index = 0 }) {
           {project.tech?.length > 0 && (
             <ul className="mt-4 flex flex-wrap gap-1.5" aria-label="Technologies">
               {project.tech.map((item) => (
-                <li key={item} className="rounded-md border border-line px-2 py-0.5 text-xs text-muted">
+                <li key={item} className="rounded-md bg-accent-soft px-2 py-0.5 text-xs font-medium text-accent-strong">
                   {item}
                 </li>
               ))}
@@ -55,7 +55,7 @@ export default function ProjectCard({ project, index = 0 }) {
           <div className="mt-auto flex flex-wrap items-center gap-2 pt-5">
             <Link
               to={detailsPath}
-              className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-brand px-3.5 text-[13px] font-semibold text-white transition-colors hover:bg-brand-deep"
+              className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-brand px-3.5 text-[13px] font-semibold text-white transition-colors hover:bg-brand-deep"
             >
               View details
               <ArrowRight className="h-4 w-4" aria-hidden="true" />

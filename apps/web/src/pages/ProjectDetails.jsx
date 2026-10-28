@@ -82,8 +82,9 @@ export default function ProjectDetails() {
 
   return (
     <>
-      <header className="border-b border-line bg-surface-alt">
-        <div className="container-page py-10 sm:py-14">
+      <header className="relative overflow-hidden border-b border-line bg-page">
+        <div aria-hidden="true" className="bg-wash pointer-events-none absolute inset-0" />
+        <div className="container-page relative py-10 sm:py-14">
           <Link
             to="/projects"
             className="inline-flex items-center gap-2 text-sm font-semibold text-link transition-colors hover:underline"
@@ -93,7 +94,7 @@ export default function ProjectDetails() {
           </Link>
 
           <div className="mt-6 flex flex-wrap items-center gap-2">
-            <span className="rounded-full bg-brand-soft px-3 py-1 text-xs font-semibold text-link">{project.category}</span>
+            <span className="rounded-full bg-leaf-soft px-3 py-1 text-xs font-semibold text-brand-deep">{project.category}</span>
             {project.placeholder && (
               <span className="rounded-full border border-dashed border-line px-3 py-1 text-xs font-medium text-muted">
                 Sample placeholder
@@ -101,7 +102,7 @@ export default function ProjectDetails() {
             )}
           </div>
 
-          <h1 className="mt-4 max-w-3xl text-4xl font-bold tracking-tight text-ink sm:text-5xl">{project.title}</h1>
+          <h1 className="mt-4 max-w-3xl text-3xl font-bold tracking-tight text-brand-deep sm:text-4xl lg:text-5xl">{project.title}</h1>
           <p className="mt-4 max-w-2xl text-base leading-relaxed text-muted sm:text-lg">{project.summary}</p>
 
           {(github || live) && (
@@ -123,7 +124,7 @@ export default function ProjectDetails() {
         </div>
       </header>
 
-      <div className="bg-surface py-12 sm:py-16">
+      <div className="bg-page py-12 sm:py-16">
         <div className="container-page">
           <Reveal>
             <SmartImage

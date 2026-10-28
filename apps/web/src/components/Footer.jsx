@@ -15,7 +15,7 @@ const exploreLinks = [
 ]
 
 const linkClass =
-  'inline-flex items-center gap-1.5 text-xs text-muted transition-colors duration-200 hover:text-link sm:text-sm'
+  'inline-flex min-h-8 items-center gap-1.5 text-sm text-muted transition-colors duration-200 hover:text-link'
 
 export default function Footer() {
   const reduce = useReducedMotion()
@@ -29,7 +29,8 @@ export default function Footer() {
 
   return (
     <footer className="border-t border-line bg-surface-alt">
-      <div className="container-page py-7 sm:py-9">
+      <div aria-hidden="true" className="h-1 bg-linear-to-r from-leaf via-sky to-accent" />
+      <div className="container-page py-10 sm:py-12">
         {/* Main footer content */}
         <div className="grid grid-cols-2 gap-x-6 gap-y-6 sm:grid-cols-3 sm:gap-8 lg:grid-cols-[1.4fr_0.7fr_0.9fr]">
           {/* Brand */}
@@ -45,18 +46,18 @@ export default function Footer() {
               </span>
             </Link>
 
-            <p className="mt-2 max-w-xs text-xs leading-relaxed text-muted sm:text-sm">
+            <p className="mt-3 max-w-xs text-sm leading-relaxed text-muted">
               {profile.tagline}
             </p>
           </div>
 
           {/* Navigation */}
           <nav aria-label="Footer">
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-ink">
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-brand-deep">
               Explore
             </h2>
 
-            <ul className="mt-2.5 space-y-1.5">
+            <ul className="mt-3 space-y-1">
               {exploreLinks.map((link) => (
                 <li key={link.to}>
                   <Link to={link.to} className={linkClass}>
@@ -69,11 +70,11 @@ export default function Footer() {
 
           {/* Social and contact links */}
           <div>
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-ink">
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-brand-deep">
               Connect
             </h2>
 
-            <ul className="mt-2.5 space-y-1.5">
+            <ul className="mt-3 space-y-1">
               {profile.email && (
                 <li>
                   <a href={`mailto:${profile.email}`} className={linkClass}>
@@ -143,7 +144,7 @@ export default function Footer() {
         </div>
 
         {/* Compact copyright bar */}
-        <div className="mt-7 flex flex-col gap-3 border-t border-line pt-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-8 flex flex-col gap-4 border-t border-line pt-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="text-xs leading-relaxed text-muted">
             <p>
               © {year} {profile.name}. All rights reserved.
@@ -156,7 +157,7 @@ export default function Footer() {
           <button
             type="button"
             onClick={scrollToTop}
-            className="inline-flex h-8 w-fit items-center gap-1.5 rounded-md border border-line bg-surface px-3 text-xs font-medium text-ink transition-colors hover:border-brand hover:text-link"
+            className="inline-flex h-11 w-fit items-center gap-1.5 rounded-lg border border-line bg-surface px-4 text-sm font-medium text-ink transition-colors hover:border-brand hover:bg-brand-soft hover:text-link"
           >
             <ArrowUp className="h-3.5 w-3.5" aria-hidden="true" />
             Back to top
