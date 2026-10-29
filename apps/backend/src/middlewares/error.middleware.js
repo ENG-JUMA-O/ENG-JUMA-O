@@ -1,8 +1,18 @@
+
 const errorMiddleware = (err, _req, res, _next) => {
-  const statusCode = err.statusCode || 500;
+  const statusCode =
+    err.response?.status ||
+    err.statusCode ||
+    err.status ||
+    500;
+
+  const message =
+    err.response?.data?.message ||
+    err.message ||
+    "Something went wrong";
 
   if (statusCode >= 500) {
-    console.error(err);
+    console.error("[API Error]", err);
   }
 
   return res.status(statusCode).json({
@@ -10,7 +20,7 @@ const errorMiddleware = (err, _req, res, _next) => {
     message:
       statusCode === 500
         ? "Internal server error"
-        : err.message || "Something went wrong",
+        : message,
   });
 };
 

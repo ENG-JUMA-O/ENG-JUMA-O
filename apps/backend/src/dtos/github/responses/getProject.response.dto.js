@@ -1,0 +1,18 @@
+export const getProjectResponseDto = (repo) => ({
+  id: repo.id,
+  name: repo.name,
+  fullName: repo.full_name,
+  description: repo.description,
+  htmlUrl: repo.html_url,
+  homepage: repo.homepage,
+  language: repo.language,
+  topics: repo.topics ?? [],
+  stars: repo.stargazers_count,
+  watchers: repo.watchers_count,
+  forks: repo.forks_count,
+  openIssues: repo.open_issues_count,
+  isPrivate: repo.private,
+  defaultBranch: repo.default_branch,
+  createdAt: repo.created_at,
+  updatedAt: repo.updated_at,
+});

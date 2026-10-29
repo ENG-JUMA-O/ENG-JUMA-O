@@ -1,4 +1,3 @@
-
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
@@ -6,10 +5,9 @@ import morgan from "morgan";
 
 import { generalRateLimiter } from "./middlewares/rateLimiter.middleware.js";
 import errorMiddleware from "./middlewares/error.middleware.js";
-
 import healthRoutes from "./routes/health.routes.js";
-import donationRoutes from "./routes/donation.routes.js";
 import githubRoutes from "./routes/github.routes.js";
+import donationRoutes from "./routes/donation.routes.js";
 
 const app = express();
 
@@ -20,7 +18,6 @@ const allowedOrigins = [
   "https://buy-me-coffee-kzvi.onrender.com",
   "https://eng-juma-o.onrender.com",
   "http://localhost:5173",
-  "http://127.0.0.1:5173",
 ];
 
 if (process.env.FRONTEND_URL) {
@@ -33,7 +30,6 @@ if (process.env.FRONTEND_URL) {
 }
 
 app.set("trust proxy", 1);
-
 app.use(
   cors({
     origin(origin, callback) {
@@ -52,12 +48,10 @@ app.use(morgan("dev"));
 app.use(express.json({ limit: "10kb" }));
 
 app.use("/api", generalRateLimiter);
-
 app.use("/", healthRoutes);
-app.use("/api/donations", donationRoutes);
 app.use("/api/github", githubRoutes);
+app.use("/api/donations", donationRoutes);
 
-// Keep the error handler last
 app.use(errorMiddleware);
 
 export default app;

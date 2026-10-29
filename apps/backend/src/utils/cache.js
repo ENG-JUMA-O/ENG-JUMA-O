@@ -1,5 +1,5 @@
-
 const cache = new Map();
+const pendingRequests = new Map();
 
 const DEFAULT_TTL = 60 * 1000; // 60 seconds
 
@@ -28,21 +28,37 @@ export function setCache(key, value, ttl = DEFAULT_TTL) {
 export function clearCache(key) {
   if (key) {
     cache.delete(key);
+    pendingRequests.delete(key);
     return;
   }
 
   cache.clear();
+  pendingRequests.clear();
 }
 
-export function asyncCache(key, fetchData, ttl = DEFAULT_TTL) {
+export async function asyncCache(key, fetchData, ttl = DEFAULT_TTL) {
   const cached = getCache(key);
 
   if (cached !== null) {
-    return Promise.resolve(cached);
+    return cached;
   }
 
-  return fetchData().then((value) => {
-    setCache(key, value, ttl);
-    return value;
-  });
+  // Reuse an in-progress request for this cache key.
+  if (pendingRequests.has(key)) {
+    return pendingRequests.get(key);
+  }
+
+  const request = (async () => {
+    try {
+      const value = await fetchData();
+      setCache(key, value, ttl);
+      return value;
+    } finally {
+      pendingRequests.delete(key);
+    }
+  })();
+
+  pendingRequests.set(key, request);
+
+  return request;
 }
