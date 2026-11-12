@@ -11,6 +11,7 @@ import { useSeo } from '../hooks/useSeo.js'
 import { githubService } from '../services/github.service.js'
 
 const ALL = 'All Projects'
+const PAGE_SIZE = 10
 
 const SORTS = [
   { value: 'featured', label: 'Featured first' },
@@ -85,7 +86,6 @@ function toSlug(name) {
 function mapGitHubProject(repository) {
   const slug = toSlug(repository.name)
 
-  // Match curated local content when a real entry exists.
   const local = localProjects.find(
     (project) => project.slug === slug && !project.placeholder,
   )
@@ -121,6 +121,15 @@ function mapGitHubProject(repository) {
   }
 }
 
+function mapRepositories(repositories) {
+  return repositories
+    .filter(
+      (repository) =>
+        repository.name.toLowerCase() !== 'eng-juma-o',
+    )
+    .map(mapGitHubProject)
+}
+
 export default function Projects() {
   useSeo({
     title: 'Projects',
@@ -130,22 +139,40 @@ export default function Projects() {
   })
 
   const [params, setParams] = useSearchParams()
+
+  // GitHub projects
   const [githubProjects, setGithubProjects] = useState([])
+
+  // Initial loading
   const [loading, setLoading] = useState(true)
   const [apiError, setApiError] = useState('')
+
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1)
+  const [hasMore, setHasMore] = useState(false)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [loadMoreError, setLoadMoreError] = useState('')
+
+  // Retry
   const [retryCount, setRetryCount] = useState(0)
 
+  // Load the first page
   useEffect(() => {
     let cancelled = false
 
     async function loadProjects() {
       setLoading(true)
       setApiError('')
+      setLoadMoreError('')
+
+      setGithubProjects([])
+      setCurrentPage(1)
+      setHasMore(false)
 
       try {
         const response = await githubService.getProjects({
           page: 1,
-          perPage: 10,
+          perPage: PAGE_SIZE,
         })
 
         if (!response?.success || !Array.isArray(response.data)) {
@@ -154,16 +181,12 @@ export default function Projects() {
           )
         }
 
-        const repositories = response.data
-          // Exclude the GitHub profile repository from the portfolio list.
-          .filter(
-            (repository) =>
-              repository.name.toLowerCase() !== 'eng-juma-o',
-          )
-          .map(mapGitHubProject)
+        const repositories = mapRepositories(response.data)
 
         if (!cancelled) {
           setGithubProjects(repositories)
+          setHasMore(response.data.length === PAGE_SIZE)
+          setCurrentPage(1)
         }
       } catch (error) {
         if (!cancelled) {
@@ -186,6 +209,53 @@ export default function Projects() {
     }
   }, [retryCount])
 
+  // Load the next GitHub page
+  const loadMoreProjects = async () => {
+    if (loadingMore || loading || !hasMore) return
+
+    const nextPage = currentPage + 1
+
+    setLoadingMore(true)
+    setLoadMoreError('')
+
+    try {
+      const response = await githubService.getProjects({
+        page: nextPage,
+        perPage: PAGE_SIZE,
+      })
+
+      if (!response?.success || !Array.isArray(response.data)) {
+        throw new Error(
+          'Unable to load the next page of projects.',
+        )
+      }
+
+      const repositories = mapRepositories(response.data)
+
+      setGithubProjects((previous) => {
+        const existingSlugs = new Set(
+          previous.map((project) => project.slug),
+        )
+
+        const newProjects = repositories.filter(
+          (project) => !existingSlugs.has(project.slug),
+        )
+
+        return [...previous, ...newProjects]
+      })
+
+      setCurrentPage(nextPage)
+      setHasMore(response.data.length === PAGE_SIZE)
+    } catch (error) {
+      setLoadMoreError(
+        error.message || 'Unable to load more projects.',
+      )
+    } finally {
+      setLoadingMore(false)
+    }
+  }
+
+  // Available categories
   const categories = useMemo(() => {
     const present = new Set(
       githubProjects.map((project) => project.category),
@@ -210,7 +280,9 @@ export default function Projects() {
     (option) => option.value !== 'newest' || hasDates,
   )
 
+  // URL filters
   const requestedCategory = params.get('category') || ALL
+
   const category = categories.includes(requestedCategory)
     ? requestedCategory
     : ALL
@@ -224,6 +296,7 @@ export default function Projects() {
     ? requestedSort
     : 'featured'
 
+  // Update URL query parameters
   const update = (changes) => {
     const next = new URLSearchParams(params)
 
@@ -243,6 +316,7 @@ export default function Projects() {
     setParams(next, { replace: true })
   }
 
+  // Filter and sort all loaded projects
   const results = useMemo(() => {
     const term = query.trim().toLowerCase()
 
@@ -282,6 +356,7 @@ export default function Projects() {
         <p className="max-w-2xl text-sm leading-relaxed text-muted">
           Browse by category, search by name or technology, and open any
           project for the full story.
+
           {!loading && !apiError && (
             <>
               {' '}
@@ -296,6 +371,7 @@ export default function Projects() {
         className="bg-page py-12 sm:py-16"
       >
         <div className="container-page">
+          {/* Initial loading */}
           {loading && (
             <div
               role="status"
@@ -312,6 +388,7 @@ export default function Projects() {
             </div>
           )}
 
+          {/* API error */}
           {apiError && !loading && (
             <div
               role="alert"
@@ -320,9 +397,11 @@ export default function Projects() {
               <h2 className="font-semibold text-ink">
                 Unable to load projects
               </h2>
+
               <p className="mt-2 text-sm leading-relaxed text-muted">
                 {apiError}
               </p>
+
               <Button
                 variant="secondary"
                 className="mt-4"
@@ -333,8 +412,10 @@ export default function Projects() {
             </div>
           )}
 
+          {/* Projects catalogue */}
           {!loading && !apiError && (
             <>
+              {/* Filters and search */}
               <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
                 <div
                   role="group"
@@ -363,6 +444,7 @@ export default function Projects() {
                 </div>
 
                 <div className="flex flex-col gap-3 sm:flex-row">
+                  {/* Search */}
                   <div className="relative sm:w-72">
                     <label
                       htmlFor="project-search"
@@ -403,6 +485,7 @@ export default function Projects() {
                     )}
                   </div>
 
+                  {/* Sorting */}
                   {sortOptions.length > 1 && (
                     <div>
                       <label
@@ -434,6 +517,7 @@ export default function Projects() {
                 </div>
               </div>
 
+              {/* Results count */}
               <p
                 role="status"
                 aria-live="polite"
@@ -441,12 +525,15 @@ export default function Projects() {
               >
                 Showing {results.length}{' '}
                 {results.length === 1 ? 'project' : 'projects'}
+
                 {category !== ALL ? ` in ${category}` : ''}
+
                 {query.trim()
                   ? ` matching “${query.trim()}”`
                   : ''}
               </p>
 
+              {/* Project cards */}
               {results.length > 0 ? (
                 <ul className="mt-6 grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
                   {results.map((project, index) => (
@@ -487,6 +574,50 @@ export default function Projects() {
                       Clear search and filters
                     </Button>
                   )}
+                </div>
+              )}
+
+              {/* Pagination */}
+              {githubProjects.length > 0 && (
+                <div className="mt-12 flex flex-col items-center gap-4">
+                  {loadMoreError && (
+                    <div
+                      role="alert"
+                      className="text-center text-sm text-red-600"
+                    >
+                      {loadMoreError}
+                    </div>
+                  )}
+
+                  {hasMore && (
+                    <Button
+                      variant="secondary"
+                      onClick={loadMoreProjects}
+                      disabled={loadingMore}
+                    >
+                      {loadingMore ? (
+                        <>
+                          <span
+                            className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
+                            aria-hidden="true"
+                          />
+                          Loading projects...
+                        </>
+                      ) : (
+                        'Load More Projects'
+                      )}
+                    </Button>
+                  )}
+
+                  {!hasMore && (
+                    <p className="text-sm text-muted">
+                      You've reached the end of the projects.
+                    </p>
+                  )}
+
+                  <p className="text-xs text-muted">
+                    {githubProjects.length} projects loaded from GitHub
+                  </p>
                 </div>
               )}
             </>

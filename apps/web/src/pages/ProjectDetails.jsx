@@ -8,7 +8,8 @@ import {
   ExternalLink,
   ZoomIn,
   LoaderCircle,
-  AlertCircle,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react'
 
 import Button from '../components/Button.jsx'
@@ -22,6 +23,8 @@ import { projects as localProjects } from '../data/projects.js'
 import { useSeo } from '../hooks/useSeo.js'
 import { githubService } from '../services/github.service.js'
 import { safeUrl } from '../utils/url.js'
+
+const RELATED_PAGE_SIZE = 3
 
 function toSlug(name = '') {
   return name
@@ -65,7 +68,6 @@ function getRepositoryName(slug) {
     return curated.github.split('/').filter(Boolean).pop()
   }
 
-  // Resolve a slug against known local project metadata first.
   const matchingProject = localProjects.find(
     (item) => !item.placeholder && toSlug(item.slug) === slug,
   )
@@ -74,7 +76,6 @@ function getRepositoryName(slug) {
     return matchingProject.github.split('/').filter(Boolean).pop()
   }
 
-  // A slug must not match a known sample placeholder.
   const isPlaceholder = localProjects.some(
     (item) => item.placeholder && item.slug === slug,
   )
@@ -92,6 +93,9 @@ export default function ProjectDetails() {
   const [readmeError, setReadmeError] = useState('')
   const [lightboxIndex, setLightboxIndex] = useState(null)
 
+  // Related projects pagination
+  const [relatedPage, setRelatedPage] = useState(1)
+
   const localProject = localProjects.find(
     (item) => item.slug === slug && !item.placeholder,
   )
@@ -104,6 +108,11 @@ export default function ProjectDetails() {
     path: `/projects/${slug}`,
     noindex: false,
   })
+
+  // Reset related projects pagination when opening another project.
+  useEffect(() => {
+    setRelatedPage(1)
+  }, [slug])
 
   useEffect(() => {
     let cancelled = false
@@ -259,16 +268,47 @@ export default function ProjectDetails() {
     [project],
   )
 
+  // Get all related local projects without limiting the results.
   const related = useMemo(() => {
     if (!project) return []
 
-    return localProjects
-      .filter(
-        (item) =>
-          !item.placeholder && item.slug !== project.slug,
-      )
-      .slice(0, 3)
+    return localProjects.filter(
+      (item) =>
+        !item.placeholder && item.slug !== project.slug,
+    )
   }, [project])
+
+  // Calculate pagination.
+  const relatedPageCount = Math.ceil(
+    related.length / RELATED_PAGE_SIZE,
+  )
+
+  // Keep the current page within the available page range.
+  const currentRelatedPage = Math.min(
+    relatedPage,
+    Math.max(relatedPageCount, 1),
+  )
+
+  // Display only three related projects on the current page.
+  const displayedRelated = useMemo(() => {
+    const startIndex =
+      (currentRelatedPage - 1) * RELATED_PAGE_SIZE
+
+    return related.slice(
+      startIndex,
+      startIndex + RELATED_PAGE_SIZE,
+    )
+  }, [related, currentRelatedPage])
+
+  function handlePreviousRelatedPage() {
+    setRelatedPage((current) => Math.max(1, current - 1))
+  }
+
+  function handleNextRelatedPage() {
+    setRelatedPage((current) =>
+      Math.min(relatedPageCount, current + 1),
+    )
+  }
 
   if (loading) {
     return (
@@ -414,7 +454,10 @@ export default function ProjectDetails() {
               {project.goals?.length > 0 && (
                 <ul className="space-y-2">
                   {project.goals.map((goal) => (
-                    <li key={goal} className="flex gap-3 text-base text-muted">
+                    <li
+                      key={goal}
+                      className="flex gap-3 text-base text-muted"
+                    >
                       <Check
                         className="mt-1 h-4 w-4 shrink-0 text-link"
                         aria-hidden="true"
@@ -519,7 +562,10 @@ export default function ProjectDetails() {
                     className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-link hover:underline"
                   >
                     Read repository on GitHub
-                    <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                    <ExternalLink
+                      className="h-4 w-4"
+                      aria-hidden="true"
+                    />
                   </a>
                 )}
               </div>
@@ -543,7 +589,10 @@ export default function ProjectDetails() {
                     className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-link hover:underline"
                   >
                     View formatted README on GitHub
-                    <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                    <ExternalLink
+                      className="h-4 w-4"
+                      aria-hidden="true"
+                    />
                   </a>
                 )}
               </div>
@@ -583,7 +632,10 @@ export default function ProjectDetails() {
                           />
 
                           <span className="absolute right-2.5 top-2.5 grid h-8 w-8 place-items-center rounded-lg bg-surface/90 text-ink opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
-                            <ZoomIn className="h-4 w-4" aria-hidden="true" />
+                            <ZoomIn
+                              className="h-4 w-4"
+                              aria-hidden="true"
+                            />
                           </span>
 
                           <span className="sr-only">
@@ -660,28 +712,97 @@ export default function ProjectDetails() {
             </aside>
           </div>
 
+          {/* Related projects with pagination */}
           {related.length > 0 && (
-            <section className="mt-16" aria-labelledby="related-title">
-              <h2
-                id="related-title"
-                className="text-2xl font-bold tracking-tight text-ink"
-              >
-                Related projects
-              </h2>
+            <section
+              className="mt-16"
+              aria-labelledby="related-title"
+            >
+              <div className="flex flex-wrap items-end justify-between gap-4">
+                <div>
+                  <h2
+                    id="related-title"
+                    className="text-2xl font-bold tracking-tight text-ink"
+                  >
+                    Related projects
+                  </h2>
+
+                  <p className="mt-2 text-sm text-muted">
+                    Explore more projects from the portfolio.
+                  </p>
+                </div>
+
+                {relatedPageCount > 1 && (
+                  <p
+                    className="text-sm text-muted"
+                    aria-live="polite"
+                  >
+                    Page {currentRelatedPage} of {relatedPageCount}
+                  </p>
+                )}
+              </div>
 
               <ul className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {related.map((item, index) => (
+                {displayedRelated.map((item, index) => (
                   <li key={item.slug}>
-                    <ProjectCard project={item} index={index} />
+                    <ProjectCard
+                      project={item}
+                      index={index}
+                    />
                   </li>
                 ))}
               </ul>
+
+              {relatedPageCount > 1 && (
+                <nav
+                  aria-label="Related projects pagination"
+                  className="mt-8 flex flex-wrap items-center justify-center gap-3"
+                >
+                  <button
+                    type="button"
+                    onClick={handlePreviousRelatedPage}
+                    disabled={currentRelatedPage === 1}
+                    className="inline-flex items-center gap-2 rounded-lg border border-line bg-surface px-4 py-2.5 text-sm font-semibold text-ink transition-colors hover:bg-surface-alt disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <ChevronLeft
+                      className="h-4 w-4"
+                      aria-hidden="true"
+                    />
+                    Previous
+                  </button>
+
+                  <span
+                    className="text-sm font-medium text-muted"
+                    aria-live="polite"
+                  >
+                    {currentRelatedPage} / {relatedPageCount}
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={handleNextRelatedPage}
+                    disabled={
+                      currentRelatedPage === relatedPageCount
+                    }
+                    className="inline-flex items-center gap-2 rounded-lg border border-line bg-surface px-4 py-2.5 text-sm font-semibold text-ink transition-colors hover:bg-surface-alt disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Next
+                    <ChevronRight
+                      className="h-4 w-4"
+                      aria-hidden="true"
+                    />
+                  </button>
+                </nav>
+              )}
             </section>
           )}
 
           <div className="mt-14">
             <Button to="/projects" variant="secondary">
-              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+              <ArrowLeft
+                className="h-4 w-4"
+                aria-hidden="true"
+              />
               Back to all projects
             </Button>
           </div>
