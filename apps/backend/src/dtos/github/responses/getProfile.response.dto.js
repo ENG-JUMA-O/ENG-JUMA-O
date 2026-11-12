@@ -1,4 +1,4 @@
-export const getProfileResponseDto = (profile) => ({
+export const getProfileResponseDto = (profile, totalStars = 0) => ({
   login: profile.login,
   name: profile.name,
   bio: profile.bio,
@@ -7,4 +7,5 @@ export const getProfileResponseDto = (profile) => ({
   publicRepos: profile.public_repos,
   followers: profile.followers,
   following: profile.following,
+  totalStars,
 });
