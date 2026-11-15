@@ -1,0 +1,31 @@
+enum NotificationType {
+  SUPPORTER_DONATION_RECEIPT
+  COFFEE_RECIPIENT_NOTIFICATION
+  ADMIN_NEW_DONATION
+}
+
+enum NotificationStatus {
+  PENDING
+  SENDING
+  SENT
+  FAILED
+}
+
+model Notification {
+  id             String             @id @default(cuid())
+  donationId     String
+  donation       Donation           @relation(fields: [donationId], references: [id], onDelete: Cascade)
+  type           NotificationType
+  recipient      String
+  status         NotificationStatus @default(PENDING)
+  providerId     String?
+  providerStatus String?
+  attempts       Int                @default(0)
+  lastError      String?
+  sentAt         DateTime?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  @@unique([donationId, type])
+  @@index([status, updatedAt])
+}

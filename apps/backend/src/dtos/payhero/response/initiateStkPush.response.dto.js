@@ -1,0 +1,20 @@
+export default function initiateStkPushResponseDto({ donation, payment }) {
+    return {
+        success: true,
+        message: "Donation initiated successfully",
+        data: {
+            donation: {
+                id: donation.id,
+                externalReference: donation.externalReference,
+                amount: donation.amount,
+                status: donation.status,
+                createdAt: donation.createdAt,
+            },
+            payment: {
+                status: payment?.status ?? null,
+                reference: payment?.reference ?? null,
+                checkoutRequestId: payment?.CheckoutRequestID ?? null,
+            },
+        },
+    };
+}

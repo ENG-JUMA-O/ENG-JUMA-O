@@ -1,29 +1,25 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "private": true,
-  "description": "Portfolio System backend API",
+  "description": "",
   "main": "server.js",
-  "type": "module",
   "scripts": {
     "dev": "nodemon server.js",
-    "start": "node server.js",
-    "build": "prisma generate"
+    "start": "node server.js"
   },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
   "dependencies": {
     "@prisma/client": "^6.19.3",
-    "axios": "^1.21.0",
-    "bullmq": "^6.5.1",
+    "axios": "^1.21.1",
+    "compression": "^1.8.2",
     "cors": "^2.8.6",
-    "dotenv": "^16.6.1",
+    "dotenv": "^18.0.10",
     "express": "^5.3.0",
-    "express-rate-limit": "^8.7.1",
-    "express-validator": "^7.3.2",
     "helmet": "^8.3.0",
-    "ioredis": "^6.0.0",
-    "marked": "^18.1.2",
-    "morgan": "^1.12.1",
-    "sanitize-html": "^2.18.1"
+    "morgan": "^1.12.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.14",
