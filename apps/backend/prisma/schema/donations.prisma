@@ -1,0 +1,34 @@
+enum DonationStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  CANCELLED
+}
+
+model Donation {
+  id                        String         @id @default(cuid())
+  externalReference         String         @unique
+  checkoutRequestId         String?        @unique
+  merchantRequestId         String?
+
+  amount                    Int
+  phone                     String
+  customerName              String?
+  message                   String?
+  isAnonymous               Boolean        @default(false)
+
+  status                    DonationStatus @default(PENDING)
+  mpesaReceiptNumber        String?        @unique
+  providerResultCode        String?
+  providerResultDescription String?
+
+  notifications             Notification[]
+
+  createdAt                 DateTime       @default(now())
+  updatedAt                 DateTime       @updatedAt
+  paidAt                    DateTime?
+
+  @@index([status, createdAt])
+  @@index([phone, createdAt])
+  @@index([createdAt])
+}

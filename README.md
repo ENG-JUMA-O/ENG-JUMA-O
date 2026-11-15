@@ -11,28 +11,25 @@ I'm a passionate software developer focused on designing and building modern, sc
 <table >
   <tr>
     <td >
-      <img src="packages/public/images/flutter.png" alt="Flutter" width="50"/>
+      <img src="apps/Buy-Coffee/public/images/flutter.png" alt="Flutter" width="50"/>
     </td>
     <td >
-      <img src="packages/public/images/dart.png" alt="Dart" width="50"/>
+      <img src="apps/Buy-Coffee/public/images/dart.png" alt="Dart" width="50"/>
     </td>
     <td >
-      <img src="packages/public/images/swiftui.png" alt="SwiftUI" width="50"/>
+      <img src="apps/Buy-Coffee/public/images/swiftui.png" alt="SwiftUI" width="50"/>
     </td>
         <td >
-      <img src="packages/public/images/react.png" alt="React" width="50"/>
+      <img src="apps/Buy-Coffee/public/images/react.png" alt="React" width="50"/>
     </td>
     <td >
-      <img src="packages/public/images/sql.webp" alt="SQL" width="50"/>
+      <img src="apps/Buy-Coffee/public/images/sql.webp" alt="SQL" width="50"/>
     </td>
     <td >
-      <img src="packages/public/images/nodejs.png" alt="Node.js" width="50"/>
+      <img src="apps/Buy-Coffee/public/images/nodejs.png" alt="Node.js" width="50"/>
     </td>
     <td >
-      <img src="packages/public/images/github.png" alt="GitHub" width="50"/>
-    </td>
-   <td >
-      <img src="packages/public/images/typescript.png" alt="TypeScript" width="50"/>
+      <img src="apps/Buy-Coffee/public/images/github.png" alt="GitHub" width="50"/>
     </td>
   </tr>
     <tr>
@@ -56,9 +53,6 @@ I'm a passionate software developer focused on designing and building modern, sc
     </td>
     <td >
       GitHub
-    </td>
-    <td>
-      TypeScript
     </td>
 </table>
 
