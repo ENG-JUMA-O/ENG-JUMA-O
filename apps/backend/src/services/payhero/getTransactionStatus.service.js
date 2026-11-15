@@ -1,8 +1,9 @@
+
 import payHeroClient from "../../config/payhero.client.js";
 
-export default async function getTransactionStatusService(params) {
+export default async function getTransactionStatusService(reference) {
     const { data } = await payHeroClient.get("/transaction-status", {
-        params,
+        params: { reference },
     });
 
     return data;

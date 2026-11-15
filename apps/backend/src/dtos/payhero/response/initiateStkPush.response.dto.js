@@ -1,3 +1,4 @@
+
 export default function initiateStkPushResponseDto({ donation, payment }) {
     return {
         success: true,

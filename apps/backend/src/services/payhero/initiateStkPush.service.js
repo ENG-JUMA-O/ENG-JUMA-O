@@ -46,11 +46,9 @@ export default async function initiateStkPushService(request) {
                 id: donation.id,
             },
             data: {
-                checkoutRequestId:
-                    payment.CheckoutRequestID ?? undefined,
-
-                merchantRequestId:
-                    payment.MerchantRequestID ?? undefined,
+                payHeroReference: payment.reference ?? undefined,
+                checkoutRequestId: payment.CheckoutRequestID ?? undefined,
+                merchantRequestId: payment.MerchantRequestID ?? undefined,
             },
         });
 

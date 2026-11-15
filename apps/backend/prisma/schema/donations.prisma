@@ -21,6 +21,7 @@ model Donation {
   mpesaReceiptNumber        String?        @unique
   providerResultCode        String?
   providerResultDescription String?
+  payHeroReference String? @unique
 
   notifications             Notification[]
 
