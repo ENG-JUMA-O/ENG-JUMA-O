@@ -1,4 +1,3 @@
-
 import { Router } from "express";
 
 import initiateStkPush from "../controllers/payhero/initiateStkPush.controller.js";
@@ -11,16 +10,23 @@ import payHeroCallback from "../controllers/payhero/payHeroCallback.controller.j
 
 import payHeroCallbackAuth from "../middleware/payheroCallbackAuth.middleware.js";
 
+import { paymentLimiter,
+         callbackLimiter,
+         topUpLimiter,
+         readLimiter } from "../middleware/payheroRateLimit.middleware.js";
+import { initiatePaymentValidator,
+         callbackValidator,
+         transactionStatusValidator } from "../validators/payhero.validators.js";
+
 const router = Router();
 
 // Payments
-router.post("/payments", initiateStkPush);
-router.post("/callback", payHeroCallbackAuth, payHeroCallback);
-
-router.get("/payment_channels", getPaymentChannels);
-router.get("/wallets", getWalletBalance);
-router.post("/topup", topUpWallet);
-router.get("/transaction-status", getTransactionStatus);
-router.get("/transactions", getTransactions);
+router.post("/payments", paymentLimiter, initiatePaymentValidator, initiateStkPush);
+router.post("/callback", callbackLimiter, payHeroCallbackAuth, callbackValidator, payHeroCallback);
+router.get("/payment_channels", readLimiter, getPaymentChannels);
+router.get("/wallets", readLimiter, getWalletBalance);
+router.post("/topup", topUpLimiter, topUpWallet);
+router.get("/transaction-status", readLimiter, transactionStatusValidator, getTransactionStatus);
+router.get("/transactions", readLimiter, getTransactions);
 
 export default router;
