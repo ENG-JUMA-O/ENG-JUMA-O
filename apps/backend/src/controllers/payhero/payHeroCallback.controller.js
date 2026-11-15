@@ -3,15 +3,32 @@ import payHeroCallbackService from "../../services/payhero/payHeroCallback.servi
 
 export default async function payHeroCallbackController(req, res, next) {
     try {
-        console.log("PAYHERO CALLBACK BODY:", {
-            topLevelKeys: Object.keys(req.body ?? {}),
-            status: req.body?.status,
-            responseKeys: Object.keys(req.body?.response ?? {}),
-            externalReference: req.body?.response?.ExternalReference,
-            resultCode: req.body?.response?.ResultCode,
-            paymentStatus: req.body?.response?.Status,
-        });
+        const response = req.body?.response;
 
+        // Handle PayHero transaction notifications separately
+        const isTransactionNotification =
+            response &&
+            (
+                "Transaction_Type" in response ||
+                "MPESA_Reference" in response ||
+                "Transaction_Reference" in response
+            );
+
+        if (!response?.ExternalReference && isTransactionNotification) {
+            console.log("PayHero transaction notification received:", {
+                transactionType: response.Transaction_Type,
+                transactionReference: response.Transaction_Reference,
+                sentAt: req.body?.sent_at,
+            });
+
+            return res.status(200).json({
+                success: true,
+                message: "Transaction notification received",
+                ignored: true,
+            });
+        }
+
+        // Process normal STK payment callback
         const donation = await payHeroCallbackService(req.body);
 
         return res.status(200).json({
