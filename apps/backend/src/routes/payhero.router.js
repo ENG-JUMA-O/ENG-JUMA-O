@@ -9,11 +9,14 @@ import getTransactions from "../controllers/payhero/getTransactions.controller.j
 import topUpWallet from "../controllers/payhero/topUpWallet.controller.js";
 import payHeroCallback from "../controllers/payhero/payHeroCallback.controller.js";
 
+import payHeroCallbackAuth from "../middleware/payheroCallbackAuth.middleware.js";
+
 const router = Router();
 
 // Payments
 router.post("/payments", initiateStkPush);
-router.post("/callback", payHeroCallback);
+router.post("/callback", payHeroCallbackAuth, payHeroCallback);
+
 router.get("/payment_channels", getPaymentChannels);
 router.get("/wallets", getWalletBalance);
 router.post("/topup", topUpWallet);
