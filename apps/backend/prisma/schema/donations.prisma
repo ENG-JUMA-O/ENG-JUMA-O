@@ -14,7 +14,6 @@ model Donation {
   amount                    Int
   phone                     String
   customerName              String?
-  message                   String?
   isAnonymous               Boolean        @default(false)
 
   status                    DonationStatus @default(PENDING)
