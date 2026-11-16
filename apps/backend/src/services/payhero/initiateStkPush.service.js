@@ -1,4 +1,3 @@
-
 import payHeroClient from "../../config/payhero.client.js";
 import payHeroConfig from "../../config/payhero.config.js";
 
@@ -15,7 +14,6 @@ export default async function initiateStkPushService(request) {
     const donation = await donationRepository.create({
         amount: request.amount,
         phone: request.phone_number,
-        message: request.message,
         isAnonymous: request.isAnonymous ?? false,
         externalReference,
         status: "PENDING",
