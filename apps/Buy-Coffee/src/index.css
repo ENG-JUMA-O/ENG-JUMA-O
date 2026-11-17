@@ -1,1 +1,71 @@
 @import "tailwindcss";
+
+
+/* Animated Contact Background */
+
+.contact-background {
+  isolation: isolate;
+  background: #050605;
+}
+
+.background-glow {
+  position: absolute;
+  width: 450px;
+  height: 450px;
+  border-radius: 50%;
+  filter: blur(110px);
+  opacity: 0.22;
+  pointer-events: none;
+  z-index: -1;
+  animation: moveGlow 14s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+.glow-one {
+  top: -180px;
+  left: -120px;
+  background: #2563eb;
+}
+
+.glow-two {
+  top: 35%;
+  right: -180px;
+  background: #06b6d4;
+  animation-delay: -5s;
+}
+
+.glow-three {
+  bottom: -200px;
+  left: 35%;
+  background: #7c3aed;
+  animation-delay: -9s;
+}
+
+@keyframes moveGlow {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  50% {
+    transform: translate(100px, 80px) scale(1.2);
+  }
+
+  100% {
+    transform: translate(-70px, 120px) scale(0.9);
+  }
+}
+
+@media (max-width: 640px) {
+  .background-glow {
+    width: 280px;
+    height: 280px;
+    filter: blur(85px);
+    opacity: 0.2;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .background-glow {
+    animation: none;
+  }
+}
